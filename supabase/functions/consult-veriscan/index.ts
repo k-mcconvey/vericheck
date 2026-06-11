@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
 
     const { data: participant, error: pErr } = await sb
       .from('participants')
-      .select('instance_id, group')
+      .select('instance_id, group, part1_score')
       .eq('participant_code', participant_code)
       .single()
     if (pErr || !participant) return json({ error: 'Participant not found' }, 404)
@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
       return json({ error: 'Only Groups B and C may consult VeriScan' }, 403)
     }
 
-    // Idempotency: if already consulted, return the stored result without re-charging
+    // Idempotency: if already consulted, return stored result and current score (no re-charge)
     const { data: existing } = await sb
       .from('responses')
       .select('consulted, veriscan_judgment_shown, veriscan_abstained, veriscan_score_shown')
@@ -44,8 +44,8 @@ Deno.serve(async (req) => {
       .maybeSingle()
 
     if (existing?.consulted === true) {
-      const score = existing.veriscan_score_shown ?? 0
-      const abs = Math.abs(score - 0.5)
+      const storedScore = existing.veriscan_score_shown ?? 0
+      const abs = Math.abs(storedScore - 0.5)
       const confidence = existing.veriscan_abstained
         ? null
         : (abs >= 0.40 ? 'High' : abs >= 0.15 ? 'Medium' : 'Low')
@@ -53,10 +53,11 @@ Deno.serve(async (req) => {
         verdict: existing.veriscan_abstained ? 'uncertain' : existing.veriscan_judgment_shown,
         abstained: existing.veriscan_abstained ?? false,
         confidence,
+        score: participant.part1_score,
       })
     }
 
-    // Fetch veriscan_score and ground_truth — server-only fields, never sent to browser
+    // Fetch veriscan_score and ground_truth — server-only, never sent to browser
     const { data: item, error: iErr } = await sb
       .from('items')
       .select('veriscan_score, ground_truth, case_context, stakes_tag')
@@ -74,11 +75,11 @@ Deno.serve(async (req) => {
     const judgment: string | null = abstained ? null : (score >= threshold ? 'manipulated' : 'authentic')
     const was_error = !abstained && judgment !== item.ground_truth
 
-    // Qualitative confidence from distance to decision boundary (never send raw score)
+    // Qualitative confidence from distance to decision boundary (raw score never leaves server)
     const abs = Math.abs(score - 0.5)
     const confidence = abstained ? null : (abs >= 0.40 ? 'High' : abs >= 0.15 ? 'Medium' : 'Low')
 
-    // Upsert responses row with consult fields (creates row if log-item-presented wasn't called yet)
+    // Upsert responses row with consult fields
     await sb.from('responses').upsert(
       {
         participant_code,
@@ -91,7 +92,7 @@ Deno.serve(async (req) => {
         stakes_tag: item.stakes_tag,
         ground_truth: item.ground_truth,
         consulted: true,
-        veriscan_score_shown: score,      // stored in DB for research; never returned to browser
+        veriscan_score_shown: score,       // stored server-side for research; never returned to browser
         veriscan_judgment_shown: judgment,
         veriscan_abstained: abstained,
         veriscan_was_error: was_error,
@@ -99,7 +100,14 @@ Deno.serve(async (req) => {
       { onConflict: 'participant_code,item_id,phase' },
     )
 
-    // Log consult event
+    // Charge −3 for consultation, update running score
+    const newScore = (participant.part1_score ?? 0) - 3
+    await sb
+      .from('participants')
+      .update({ part1_score: newScore })
+      .eq('participant_code', participant_code)
+
+    // Log consult event with score_after
     await sb.from('events').insert({
       participant_code,
       instance_id: participant.instance_id,
@@ -108,14 +116,16 @@ Deno.serve(async (req) => {
       presentation_index,
       event_type: 'consult',
       payload: { veriscan_judgment_shown: judgment, abstained, was_error },
+      score_after: newScore,
       client_ts: client_ts ? new Date(client_ts).toISOString() : null,
     })
 
-    // Return verdict and confidence only — raw score and ground_truth stay server-side
+    // Return verdict and score — raw score and ground_truth stay server-side
     return json({
       verdict: abstained ? 'uncertain' : judgment,
       abstained,
       confidence,
+      score: newScore,
     })
   } catch (err) {
     return json({ error: String(err) }, 500)

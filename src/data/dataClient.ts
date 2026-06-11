@@ -108,14 +108,14 @@ export interface DisplayItem {
 
 export async function getSessionItems(
   participantCode: string,
-): Promise<{ items: DisplayItem[]; group: string; total: number } | { error: string }> {
+): Promise<{ items: DisplayItem[]; group: string; total: number; part1_score: number } | { error: string }> {
   try {
     const { data, error } = await supabase.functions.invoke('get-session-items', {
       body: { participant_code: participantCode },
     })
     if (error) return { error: error.message }
     if (data?.error) return { error: data.error }
-    return data as { items: DisplayItem[]; group: string; total: number }
+    return data as { items: DisplayItem[]; group: string; total: number; part1_score: number }
   } catch (e) {
     return { error: String(e) }
   }
@@ -146,7 +146,7 @@ export async function consultVeriScan(
   itemId: number,
   presentationIndex: number,
   clientTs: number,
-): Promise<{ verdict: string; abstained: boolean; confidence: string | null } | { error: string }> {
+): Promise<{ verdict: string; abstained: boolean; confidence: string | null; score: number } | { error: string }> {
   try {
     const { data, error } = await supabase.functions.invoke('consult-veriscan', {
       body: {
@@ -158,7 +158,7 @@ export async function consultVeriScan(
     })
     if (error) return { error: error.message }
     if (data?.error) return { error: data.error }
-    return data as { verdict: string; abstained: boolean; confidence: string | null }
+    return data as { verdict: string; abstained: boolean; confidence: string | null; score: number }
   } catch (e) {
     return { error: String(e) }
   }
@@ -171,7 +171,7 @@ export async function commitJudgment(
   presentationIndex: number,
   presentedAtTs: number,
   committedAtTs: number,
-): Promise<{ ok: boolean; error?: string }> {
+): Promise<{ ok: boolean; score?: number; error?: string }> {
   try {
     const { data, error } = await supabase.functions.invoke('commit-judgment', {
       body: {
@@ -185,7 +185,7 @@ export async function commitJudgment(
     })
     if (error) return { ok: false, error: error.message }
     if (data?.error) return { ok: false, error: data.error }
-    return { ok: true }
+    return data as { ok: boolean; score: number }
   } catch (e) {
     return { ok: false, error: String(e) }
   }

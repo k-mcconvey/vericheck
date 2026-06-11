@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
 
     const { data: participant, error: pErr } = await sb
       .from('participants')
-      .select('order_seed, group')
+      .select('order_seed, group, part1_score')
       .eq('participant_code', participant_code)
       .single()
 
@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
     const shuffled = seededShuffle(items, participant.order_seed)
     const ordered = shuffled.map((item, idx) => ({ ...item, presentation_index: idx }))
 
-    return json({ items: ordered, group: participant.group, total: ordered.length })
+    return json({ items: ordered, group: participant.group, total: ordered.length, part1_score: participant.part1_score ?? 0 })
   } catch (err) {
     return json({ error: String(err) }, 500)
   }

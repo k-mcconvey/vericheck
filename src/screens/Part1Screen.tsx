@@ -20,7 +20,6 @@ const SS_SCORE = 'vc_p1_score'
 const SS_CONSULTS = 'vc_p1_consults'
 
 const STARTING_SCORE = Number(import.meta.env.VITE_STARTING_SCORE ?? 0)
-const CONSULT_COST = 3
 
 function pluralConsults(n: number) {
   if (n === 0) return 'No consults'
@@ -61,7 +60,7 @@ export default function Part1Screen({ participantCode, group, onDone }: Props) {
 
   const presentedAtRef = useRef<number>(Date.now())
 
-  // Fetch items once on mount
+  // Fetch items once on mount; sync score from server to stay authoritative on resume
   useEffect(() => {
     getSessionItems(participantCode).then((result) => {
       if ('error' in result) {
@@ -70,6 +69,8 @@ export default function Part1Screen({ participantCode, group, onDone }: Props) {
         return
       }
       setItems(result.items)
+      setScore(result.part1_score)
+      sessionStorage.setItem(SS_SCORE, String(result.part1_score))
       setLoading(false)
     })
   }, [participantCode])
@@ -117,11 +118,10 @@ export default function Part1Screen({ participantCode, group, onDone }: Props) {
       return
     }
 
-    const newScore = score - CONSULT_COST
     const newConsults = totalConsults + 1
-    setScore(newScore)
+    setScore(result.score)
     setTotalConsults(newConsults)
-    sessionStorage.setItem(SS_SCORE, String(newScore))
+    sessionStorage.setItem(SS_SCORE, String(result.score))
     sessionStorage.setItem(SS_CONSULTS, String(newConsults))
     setHasConsulted(true)
     setVeriscanResult(result)
@@ -147,6 +147,12 @@ export default function Part1Screen({ participantCode, group, onDone }: Props) {
       setActionError(result.error ?? 'Failed to submit judgment')
       setBusy(false)
       return
+    }
+
+    // Update displayed score from server-authoritative value
+    if (result.score !== undefined) {
+      setScore(result.score)
+      sessionStorage.setItem(SS_SCORE, String(result.score))
     }
 
     const nextIdx = currentIndex + 1
