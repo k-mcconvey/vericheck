@@ -190,3 +190,105 @@ export async function commitJudgment(
     return { ok: false, error: String(e) }
   }
 }
+
+// ── Part 2 ────────────────────────────────────────────────────────────────────
+
+export interface DisplayItemP2 extends DisplayItem {
+  existing_unlocks: number[]
+}
+
+export interface TierContent {
+  label: string
+  text?: string
+  display?: string
+  verdict?: string
+  abstained?: boolean
+  confidence?: string | null
+}
+
+export async function getSessionItemsP2(
+  participantCode: string,
+): Promise<{ items: DisplayItemP2[]; group: string; total: number; total_score: number } | { error: string }> {
+  try {
+    const { data, error } = await supabase.functions.invoke('get-session-items-p2', {
+      body: { participant_code: participantCode },
+    })
+    if (error) return { error: error.message }
+    if (data?.error) return { error: data.error }
+    return data as { items: DisplayItemP2[]; group: string; total: number; total_score: number }
+  } catch (e) {
+    return { error: String(e) }
+  }
+}
+
+export async function logItemPresentedP2(
+  participantCode: string,
+  itemId: number,
+  presentationIndex: number,
+  clientTs: number,
+): Promise<void> {
+  try {
+    await supabase.functions.invoke('log-item-presented-p2', {
+      body: {
+        participant_code: participantCode,
+        item_id: itemId,
+        presentation_index: presentationIndex,
+        client_ts: clientTs,
+      },
+    })
+  } catch {
+    // Fire-and-forget; idempotent on retry
+  }
+}
+
+export async function unlockTier(
+  participantCode: string,
+  itemId: number,
+  tier: number,
+  presentationIndex: number,
+  clientTs: number,
+): Promise<{ ok: boolean; tier: number; content: TierContent; total_score: number; charged: boolean } | { error: string }> {
+  try {
+    const { data, error } = await supabase.functions.invoke('unlock-tier', {
+      body: {
+        participant_code: participantCode,
+        item_id: itemId,
+        tier,
+        presentation_index: presentationIndex,
+        client_ts: clientTs,
+      },
+    })
+    if (error) return { error: error.message }
+    if (data?.error) return { error: data.error }
+    return data as { ok: boolean; tier: number; content: TierContent; total_score: number; charged: boolean }
+  } catch (e) {
+    return { error: String(e) }
+  }
+}
+
+export async function commitJudgmentP2(
+  participantCode: string,
+  itemId: number,
+  finalJudgment: 'authentic' | 'manipulated' | 'cannot_tell',
+  presentationIndex: number,
+  presentedAtTs: number,
+  committedAtTs: number,
+): Promise<{ ok: boolean; total_score?: number; error?: string }> {
+  try {
+    const { data, error } = await supabase.functions.invoke('commit-judgment-p2', {
+      body: {
+        participant_code: participantCode,
+        item_id: itemId,
+        final_judgment: finalJudgment,
+        presentation_index: presentationIndex,
+        presented_at_ts: presentedAtTs,
+        committed_at_ts: committedAtTs,
+      },
+    })
+    if (error) return { ok: false, error: error.message }
+    if (data?.error) return { ok: false, error: data.error }
+    return data as { ok: boolean; total_score: number }
+  } catch (e) {
+    return { ok: false, error: String(e) }
+  }
+}

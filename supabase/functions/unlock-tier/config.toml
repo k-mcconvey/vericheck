@@ -1,0 +1,2 @@
+[functions.unlock-tier]
+verify_jwt = false

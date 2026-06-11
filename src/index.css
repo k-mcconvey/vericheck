@@ -603,6 +603,118 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* ── Part 2 unlock ladder ─────────────────────────────────────────────── */
+
+.p2-unlock-card {
+  background: #0c1a2e;
+  border-color: #1e3a5f;
+}
+
+.p2-unlock-ladder {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.p2-tier-row {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.p2-tier-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  color: #e2e8f0;
+  font-size: 0.9rem;
+  padding: 0.65rem 1rem;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  text-align: left;
+}
+
+.p2-tier-btn--next {
+  border-color: #1e40af;
+  background: #0e1e3d;
+  color: #93c5fd;
+}
+
+.p2-tier-btn--next:not(:disabled):hover {
+  border-color: #3b82f6;
+  background: #1e3a5f;
+}
+
+.p2-tier-btn--locked {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.p2-tier-btn-label {
+  font-weight: 600;
+}
+
+.p2-tier-btn-cost {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 4px;
+  padding: 0.1rem 0.45rem;
+  flex-shrink: 0;
+}
+
+.p2-tier-content {
+  background: #0f2038;
+  border: 1px solid #1e40af;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+}
+
+.p2-tier-content-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.p2-tier-check {
+  color: #34d399;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.p2-tier-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #60a5fa;
+}
+
+.p2-tier-text {
+  font-size: 0.88rem;
+  color: #cbd5e1;
+  line-height: 1.6;
+}
+
+.p2-tier-text strong {
+  color: #f1f5f9;
+}
+
+.p2-tier-verdict {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #93c5fd;
+}
+
+.p2-tier-verdict--uncertain {
+  color: #fbbf24;
+}
+
 /* ── Responsive ───────────────────────────────────────────────────────── */
 
 @media (max-width: 480px) {

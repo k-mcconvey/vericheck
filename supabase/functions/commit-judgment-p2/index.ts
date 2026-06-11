@@ -38,54 +38,34 @@ Deno.serve(async (req) => {
       .single()
     if (pErr || !participant) return json({ error: 'Participant not found' }, 404)
 
-    // Fetch existing responses row — needed for idempotency AND for consult context
+    // Fetch existing responses row — needed for idempotency and unlock state
     const { data: existing } = await sb
       .from('responses')
-      .select('final_judgment, consulted, veriscan_judgment_shown, veriscan_abstained')
+      .select('final_judgment, unlock_sequence, unlocks_purchased')
       .eq('participant_code', participant_code)
       .eq('item_id', item_id)
-      .eq('phase', 1)
+      .eq('phase', 2)
       .maybeSingle()
 
-    // Idempotency: already committed — return the current running score
+    // Idempotency: already committed — return current score
     if (existing?.final_judgment) {
-      return json({ ok: true, score: participant.part1_score })
+      const total_score = (participant.part1_score ?? 0) + (participant.part2_score ?? 0)
+      return json({ ok: true, total_score })
     }
 
-    // Fetch item: ground_truth and veriscan_score are server-only
     const { data: item, error: iErr } = await sb
       .from('items')
-      .select('case_context, stakes_tag, ground_truth, veriscan_score')
+      .select('ground_truth, case_context, stakes_tag')
       .eq('id', item_id)
       .single()
     if (iErr || !item) return json({ error: 'Item not found' }, 404)
 
-    // --- Scoring ---
-
-    // correct: abstention is never correct
     const correct = final_judgment !== 'cannot_tell' && final_judgment === item.ground_truth
     const item_score = correct ? 10 : final_judgment === 'cannot_tell' ? 0 : -5
 
-    // veriscan_was_error: item-level attribute — tool gave a non-abstaining judgment that disagrees
-    // with ground_truth. Recorded for all items so leaderboard "Catching Errors" works for Group A too.
-    const threshold = parseFloat(Deno.env.get('VERISCAN_THRESHOLD') ?? '0.5')
-    const bandStr = Deno.env.get('ABSTENTION_BAND') ?? '0.40,0.60'
-    const [bandLow, bandHigh] = bandStr.split(',').map(Number)
-    const vs = item.veriscan_score
-    const vsAbstained = vs >= bandLow && vs <= bandHigh
-    const vsJudgment = vsAbstained ? null : (vs >= threshold ? 'manipulated' : 'authentic')
-    const veriscan_was_error = !vsAbstained && vsJudgment !== item.ground_truth
-
-    // overrode_tool: null unless consulted AND tool gave a (non-abstaining) judgment
-    const consulted = existing?.consulted ?? false
-    const vjShown = existing?.veriscan_judgment_shown ?? null
-    const vsAbstainedShown = existing?.veriscan_abstained ?? false
-    const overrode_tool =
-      consulted && !vsAbstainedShown && vjShown !== null
-        ? final_judgment !== vjShown
-        : null
-    // override_correct: null when overrode_tool is null (not applicable)
-    const override_correct = overrode_tool !== null ? (overrode_tool && correct) : null
+    // last_unlock_before_commit = last element of the unlock_sequence at commit time
+    const currentSeq: number[] = Array.isArray(existing?.unlock_sequence) ? existing.unlock_sequence as number[] : []
+    const last_unlock_before_commit = currentSeq.length > 0 ? currentSeq[currentSeq.length - 1] : null
 
     const committed_at = committed_at_ts
       ? new Date(committed_at_ts).toISOString()
@@ -94,52 +74,55 @@ Deno.serve(async (req) => {
     const time_on_item_ms =
       presented_at_ts && committed_at_ts ? committed_at_ts - presented_at_ts : null
 
-    // Write responses row with all scoring fields
+    // Upsert the responses row, preserving existing unlock fields
     await sb.from('responses').upsert(
       {
         participant_code,
         instance_id: participant.instance_id,
-        phase: 1,
+        phase: 2,
         item_id,
         presentation_index,
         group: participant.group,
         case_context: item.case_context,
         stakes_tag: item.stakes_tag,
         ground_truth: item.ground_truth,
-        veriscan_was_error,
         final_judgment,
+        correct,
+        item_score,
+        last_unlock_before_commit,
         committed_at,
         ...(presented_at && { presented_at }),
         ...(time_on_item_ms != null && { time_on_item_ms }),
-        correct,
-        item_score,
-        overrode_tool,
-        override_correct,
       },
       { onConflict: 'participant_code,item_id,phase' },
     )
 
-    // Update running part1_score and total_score
-    const newScore = (participant.part1_score ?? 0) + item_score
+    const newPart2Score = (participant.part2_score ?? 0) + item_score
+    const newTotalScore = (participant.part1_score ?? 0) + newPart2Score
+
     await sb
       .from('participants')
-      .update({ part1_score: newScore, total_score: newScore + (participant.part2_score ?? 0) })
+      .update({ part2_score: newPart2Score, total_score: newTotalScore })
       .eq('participant_code', participant_code)
 
-    // Log commit_judgment event with score_after
     await sb.from('events').insert({
       participant_code,
       instance_id: participant.instance_id,
-      phase: 1,
+      phase: 2,
       item_id,
       presentation_index,
       event_type: 'commit_judgment',
-      payload: { final_judgment, correct, item_score },
-      score_after: newScore,
+      payload: {
+        final_judgment,
+        correct,
+        item_score,
+        unlocks_purchased: existing?.unlocks_purchased ?? 0,
+      },
+      score_after: newTotalScore,
       client_ts: committed_at_ts ? new Date(committed_at_ts).toISOString() : null,
     })
 
-    return json({ ok: true, score: newScore })
+    return json({ ok: true, total_score: newTotalScore })
   } catch (err) {
     return json({ error: String(err) }, 500)
   }

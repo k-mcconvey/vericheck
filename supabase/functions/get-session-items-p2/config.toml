@@ -1,0 +1,2 @@
+[functions.get-session-items-p2]
+verify_jwt = false

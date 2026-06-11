@@ -5,8 +5,19 @@ import DemographicsScreen from './screens/DemographicsScreen'
 import GroupScreen from './screens/GroupScreen'
 import WaitingScreen from './screens/WaitingScreen'
 import Part1Screen from './screens/Part1Screen'
+import BreakScreen from './screens/BreakScreen'
+import Part2Screen from './screens/Part2Screen'
 
-type Screen = 'landing' | 'consent' | 'demographics' | 'group' | 'waiting' | 'part1' | 'part1_done'
+type Screen =
+  | 'landing'
+  | 'consent'
+  | 'demographics'
+  | 'group'
+  | 'waiting'
+  | 'part1'
+  | 'part1_done'
+  | 'part2'
+  | 'done'
 
 const SS = {
   code: 'vc_code',
@@ -96,28 +107,40 @@ export default function App() {
 
     case 'part1_done':
       return (
+        <BreakScreen
+          participantCode={participantCode}
+          onPart2Open={() => goTo('part2')}
+        />
+      )
+
+    case 'part2':
+      return (
+        <Part2Screen
+          participantCode={participantCode}
+          onDone={() => goTo('done')}
+        />
+      )
+
+    case 'done':
+      return (
         <div className="screen" style={{ textAlign: 'center', paddingTop: '3rem' }}>
           <div className="code-bar" style={{ justifyContent: 'center' }}>
             <span>Your participant code:</span>
             <strong>{participantCode}</strong>
           </div>
           <div className="card" style={{ textAlign: 'center' }}>
-            <div className="waiting-icon">☕</div>
+            <div className="waiting-icon">🎉</div>
             <h2 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '0.5rem' }}>
-              Part 1 complete — take a break
+              All done — thank you!
             </h2>
             <p className="prose" style={{ marginBottom: '1rem' }}>
-              You have finished all Part 1 items. The facilitator will open Part 2 shortly.
-              Please wait — this page will update automatically.
-            </p>
-            <p style={{ fontSize: '0.8rem', color: '#64748b' }}>
-              <span className="waiting-pulse" />
-              Waiting for the next phase…
+              You have completed both parts. Your results will be available shortly.
+              Please wait for the facilitator's instructions.
             </p>
           </div>
           <div className="card" style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
             <p>
-              Withdrawal window: 7 days. Code:{' '}
+              Withdrawal window: 7 days. Your code:{' '}
               <strong style={{ color: '#38bdf8' }}>{participantCode}</strong>
             </p>
           </div>

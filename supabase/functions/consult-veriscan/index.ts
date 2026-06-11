@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
 
     const { data: participant, error: pErr } = await sb
       .from('participants')
-      .select('instance_id, group, part1_score')
+      .select('instance_id, group, part1_score, part2_score')
       .eq('participant_code', participant_code)
       .single()
     if (pErr || !participant) return json({ error: 'Participant not found' }, 404)
@@ -100,11 +100,11 @@ Deno.serve(async (req) => {
       { onConflict: 'participant_code,item_id,phase' },
     )
 
-    // Charge −3 for consultation, update running score
+    // Charge −3 for consultation, update running scores
     const newScore = (participant.part1_score ?? 0) - 3
     await sb
       .from('participants')
-      .update({ part1_score: newScore })
+      .update({ part1_score: newScore, total_score: newScore + (participant.part2_score ?? 0) })
       .eq('participant_code', participant_code)
 
     // Log consult event with score_after
