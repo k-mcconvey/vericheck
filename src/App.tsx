@@ -7,6 +7,7 @@ import WaitingScreen from './screens/WaitingScreen'
 import Part1Screen from './screens/Part1Screen'
 import BreakScreen from './screens/BreakScreen'
 import Part2Screen from './screens/Part2Screen'
+import ResultsScreen from './screens/ResultsScreen'
 
 type Screen =
   | 'landing'
@@ -17,7 +18,7 @@ type Screen =
   | 'part1'
   | 'part1_done'
   | 'part2'
-  | 'done'
+  | 'results'
 
 const SS = {
   code: 'vc_code',
@@ -117,34 +118,16 @@ export default function App() {
       return (
         <Part2Screen
           participantCode={participantCode}
-          onDone={() => goTo('done')}
+          onDone={() => goTo('results')}
         />
       )
 
-    case 'done':
+    case 'results':
       return (
-        <div className="screen" style={{ textAlign: 'center', paddingTop: '3rem' }}>
-          <div className="code-bar" style={{ justifyContent: 'center' }}>
-            <span>Your participant code:</span>
-            <strong>{participantCode}</strong>
-          </div>
-          <div className="card" style={{ textAlign: 'center' }}>
-            <div className="waiting-icon">🎉</div>
-            <h2 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '0.5rem' }}>
-              All done — thank you!
-            </h2>
-            <p className="prose" style={{ marginBottom: '1rem' }}>
-              You have completed both parts. Your results will be available shortly.
-              Please wait for the facilitator's instructions.
-            </p>
-          </div>
-          <div className="card" style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
-            <p>
-              Withdrawal window: 7 days. Your code:{' '}
-              <strong style={{ color: '#38bdf8' }}>{participantCode}</strong>
-            </p>
-          </div>
-        </div>
+        <ResultsScreen
+          participantCode={participantCode}
+          group={group}
+        />
       )
   }
 }

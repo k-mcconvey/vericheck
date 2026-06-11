@@ -266,6 +266,66 @@ export async function unlockTier(
   }
 }
 
+// ── Results & Leaderboard ─────────────────────────────────────────────────────
+
+export interface ResultsData {
+  participant_code: string
+  group: string
+  final_score: number
+  p1: {
+    total: number
+    correct: number
+    accuracy: number
+    consult_count: number
+    consult_rate: number
+  }
+  p2: {
+    total: number
+    correct: number
+    accuracy: number
+    avg_unlocks: number
+    accuracy_by_unlocks: Array<{ unlocks: number; total: number; correct: number; accuracy: number }>
+  }
+  overall: { total: number; correct: number; accuracy: number }
+  overrides: { count: number; correct: number; accuracy: number }
+}
+
+export async function getResults(
+  participantCode: string,
+): Promise<ResultsData | { error: string }> {
+  try {
+    const { data, error } = await supabase.functions.invoke('get-results', {
+      body: { participant_code: participantCode },
+    })
+    if (error) return { error: error.message }
+    if (data?.error) return { error: data.error }
+    return data as ResultsData
+  } catch (e) {
+    return { error: String(e) }
+  }
+}
+
+export interface LeaderboardData {
+  top_scorers: Array<{ participant_code: string; total_score: number }>
+  most_accurate: Array<{ participant_code: string; accuracy: number; correct: number; total: number }>
+  best_error_catchers: Array<{ participant_code: string; errors_caught: number }>
+}
+
+export async function getLeaderboard(
+  instanceId: string,
+): Promise<LeaderboardData | { error: string }> {
+  try {
+    const { data, error } = await supabase.functions.invoke('admin-get-leaderboard', {
+      body: { instance_id: instanceId },
+    })
+    if (error) return { error: error.message }
+    if (data?.error) return { error: data.error }
+    return data as LeaderboardData
+  } catch (e) {
+    return { error: String(e) }
+  }
+}
+
 export async function commitJudgmentP2(
   participantCode: string,
   itemId: number,
