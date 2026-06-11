@@ -1,72 +1,89 @@
-import { useEffect, useState } from 'react'
-import { pingSupabase } from './data/dataClient'
+import { useState } from 'react'
+import LandingScreen from './screens/LandingScreen'
+import ConsentScreen from './screens/ConsentScreen'
+import DemographicsScreen from './screens/DemographicsScreen'
+import GroupScreen from './screens/GroupScreen'
+import WaitingScreen from './screens/WaitingScreen'
 
-type Status = 'checking' | 'ok' | 'error'
+type Screen = 'landing' | 'consent' | 'demographics' | 'group' | 'waiting'
 
-export default function App() {
-  const [status, setStatus] = useState<Status>('checking')
-  const [errorMsg, setErrorMsg] = useState<string>()
+const SS = {
+  code: 'vc_code',
+  seed: 'vc_seed',
+  screen: 'vc_screen',
+  group: 'vc_group',
+} as const
 
-  useEffect(() => {
-    pingSupabase().then(({ ok, error }) => {
-      setStatus(ok ? 'ok' : 'error')
-      if (error) setErrorMsg(error)
-    })
-  }, [])
-
-  const envUrl = import.meta.env.VITE_SUPABASE_URL
-  const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-  return (
-    <div style={{ textAlign: 'center', padding: '2rem', maxWidth: 560 }}>
-      <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem' }}>
-        VeriCheck
-      </h1>
-      <p style={{ color: '#94a3b8', marginBottom: '2rem' }}>
-        Algorithmic Transparency and Trust — U of T Protocol #65720
-      </p>
-
-      <div style={{
-        background: '#1e293b',
-        borderRadius: 8,
-        padding: '1.5rem',
-        textAlign: 'left',
-        fontSize: '0.875rem',
-        lineHeight: 1.6,
-      }}>
-        <h2 style={{ fontSize: '1rem', marginBottom: '1rem', color: '#cbd5e1' }}>
-          Milestone 1 — Environment Check
-        </h2>
-
-        <Row label="VITE_SUPABASE_URL" value={envUrl || '(not set)'} ok={!!envUrl} />
-        <Row label="VITE_SUPABASE_ANON_KEY" value={envKey ? '(set)' : '(not set)'} ok={!!envKey} />
-
-        <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #334155' }}>
-          <span style={{ color: '#94a3b8' }}>Supabase ping: </span>
-          {status === 'checking' && <span style={{ color: '#f59e0b' }}>checking…</span>}
-          {status === 'ok' && <span style={{ color: '#22c55e' }}>connected</span>}
-          {status === 'error' && (
-            <span style={{ color: '#f87171' }}>
-              failed — {errorMsg ?? 'unknown error'}
-            </span>
-          )}
-        </div>
-
-        {(!envUrl || !envKey) && (
-          <p style={{ marginTop: '1rem', color: '#f59e0b', fontSize: '0.8rem' }}>
-            Fill in .env.local with your Supabase URL and anon key, then restart the dev server.
-          </p>
-        )}
-      </div>
-    </div>
-  )
+function readSession(): { screen: Screen; code: string; seed: number; group: string } {
+  const code = sessionStorage.getItem(SS.code) ?? ''
+  const seed = Number(sessionStorage.getItem(SS.seed) ?? '0')
+  const screen = (sessionStorage.getItem(SS.screen) as Screen | null) ?? 'landing'
+  const group = sessionStorage.getItem(SS.group) ?? ''
+  // If we have a code but the stored screen is landing, advance to consent
+  // (handles the edge case where start-participant succeeded but the write to
+  // sessionStorage happened before a crash on the screen transition)
+  const effectiveScreen = code && screen === 'landing' ? 'consent' : screen
+  return { screen: effectiveScreen, code, seed, group }
 }
 
-function Row({ label, value, ok }: { label: string; value: string; ok: boolean }) {
-  return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginBottom: '0.4rem' }}>
-      <span style={{ color: '#94a3b8' }}>{label}</span>
-      <span style={{ color: ok ? '#22c55e' : '#f87171' }}>{value}</span>
-    </div>
-  )
+function persist(updates: Partial<{ screen: Screen; code: string; seed: number; group: string }>) {
+  if (updates.screen !== undefined) sessionStorage.setItem(SS.screen, updates.screen)
+  if (updates.code !== undefined) sessionStorage.setItem(SS.code, updates.code)
+  if (updates.seed !== undefined) sessionStorage.setItem(SS.seed, String(updates.seed))
+  if (updates.group !== undefined) sessionStorage.setItem(SS.group, updates.group)
+}
+
+export default function App() {
+  const initial = readSession()
+  const [screen, setScreen] = useState<Screen>(initial.screen)
+  const [participantCode, setParticipantCode] = useState(initial.code)
+  const [group, setGroupState] = useState(initial.group)
+
+  function goTo(next: Screen, extras?: { code?: string; seed?: number; group?: string }) {
+    persist({ screen: next, ...extras })
+    if (extras?.code) setParticipantCode(extras.code)
+    if (extras?.group) setGroupState(extras.group)
+    setScreen(next)
+  }
+
+  switch (screen) {
+    case 'landing':
+      return (
+        <LandingScreen
+          onStarted={(code, seed) => goTo('consent', { code, seed })}
+        />
+      )
+
+    case 'consent':
+      return (
+        <ConsentScreen
+          participantCode={participantCode}
+          onConsented={() => goTo('demographics')}
+        />
+      )
+
+    case 'demographics':
+      return (
+        <DemographicsScreen
+          participantCode={participantCode}
+          onCompleted={() => goTo('group')}
+        />
+      )
+
+    case 'group':
+      return (
+        <GroupScreen
+          participantCode={participantCode}
+          onGroupSet={(g) => goTo('waiting', { group: g })}
+        />
+      )
+
+    case 'waiting':
+      return (
+        <WaitingScreen
+          participantCode={participantCode}
+          group={group}
+        />
+      )
+  }
 }
