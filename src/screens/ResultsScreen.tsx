@@ -4,12 +4,13 @@ import { supabase, getResults, getLeaderboard, type ResultsData, type Leaderboar
 interface Props {
   participantCode: string
   group: string
+  selfPaced?: boolean
 }
 
 const pct = (n: number) => `${Math.round(n * 100)}%`
 const round1 = (n: number) => n.toFixed(1)
 
-export default function ResultsScreen({ participantCode, group }: Props) {
+export default function ResultsScreen({ participantCode, group, selfPaced = false }: Props) {
   const instanceId = import.meta.env.VITE_INSTANCE_ID ?? 'test'
 
   const [results, setResults] = useState<ResultsData | null>(null)
@@ -33,8 +34,10 @@ export default function ResultsScreen({ participantCode, group }: Props) {
     })
   }, [participantCode])
 
-  // Leaderboard reveal: check current state then subscribe
+  // Leaderboard reveal: check current state then subscribe (skipped in self-paced mode)
   useEffect(() => {
+    if (selfPaced) return
+
     let fired = false
 
     async function onReveal() {
@@ -77,7 +80,7 @@ export default function ResultsScreen({ participantCode, group }: Props) {
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
-  }, [instanceId])
+  }, [instanceId, selfPaced])
 
   return (
     <div className="screen">
@@ -190,21 +193,30 @@ export default function ResultsScreen({ participantCode, group }: Props) {
       )}
 
       {/* Leaderboard */}
-      <div className="card">
-        <p className="section-label">Leaderboard</p>
-        {!leaderboardRevealed ? (
-          <div className="res-lb-waiting">
-            <span className="waiting-pulse" />
-            <span>The facilitator will reveal the leaderboard shortly…</span>
-          </div>
-        ) : leaderboardLoading ? (
-          <p className="prose">Loading leaderboard…</p>
-        ) : leaderboardError ? (
-          <p className="prose" style={{ color: '#fca5a5' }}>Could not load leaderboard: {leaderboardError}</p>
-        ) : leaderboard ? (
-          <LeaderboardDisplay leaderboard={leaderboard} selfCode={participantCode} />
-        ) : null}
-      </div>
+      {selfPaced ? (
+        <div className="card">
+          <p className="section-label">Leaderboard</p>
+          <p className="prose" style={{ color: '#94a3b8' }}>
+            Leaderboard is not shown in self-paced mode.
+          </p>
+        </div>
+      ) : (
+        <div className="card">
+          <p className="section-label">Leaderboard</p>
+          {!leaderboardRevealed ? (
+            <div className="res-lb-waiting">
+              <span className="waiting-pulse" />
+              <span>The facilitator will reveal the leaderboard shortly…</span>
+            </div>
+          ) : leaderboardLoading ? (
+            <p className="prose">Loading leaderboard…</p>
+          ) : leaderboardError ? (
+            <p className="prose" style={{ color: '#fca5a5' }}>Could not load leaderboard: {leaderboardError}</p>
+          ) : leaderboard ? (
+            <LeaderboardDisplay leaderboard={leaderboard} selfCode={participantCode} />
+          ) : null}
+        </div>
+      )}
 
       {/* Withdrawal info */}
       <div className="card" style={{ fontSize: '0.85rem', color: '#94a3b8' }}>

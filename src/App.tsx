@@ -79,6 +79,7 @@ function persist(updates: Partial<{ screen: Screen; code: string; seed: number; 
 }
 
 function ParticipantApp() {
+  const selfPaced = import.meta.env.VITE_SELF_PACED === 'true'
   const initial = readSession()
   const [screen, setScreen] = useState<Screen>(initial.screen)
   const [participantCode, setParticipantCode] = useState(initial.code)
@@ -119,7 +120,7 @@ function ParticipantApp() {
       return (
         <GroupScreen
           participantCode={participantCode}
-          onGroupSet={(g) => goTo('waiting', { group: g })}
+          onGroupSet={(g) => goTo(selfPaced ? 'part1' : 'waiting', { group: g })}
         />
       )
 
@@ -145,6 +146,7 @@ function ParticipantApp() {
       return (
         <BreakScreen
           participantCode={participantCode}
+          selfPaced={selfPaced}
           onPart2Open={() => goTo('part2')}
         />
       )
@@ -162,6 +164,7 @@ function ParticipantApp() {
         <ResultsScreen
           participantCode={participantCode}
           group={group}
+          selfPaced={selfPaced}
         />
       )
   }

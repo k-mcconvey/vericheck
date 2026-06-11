@@ -3,13 +3,16 @@ import { supabase } from '../data/dataClient'
 
 interface Props {
   participantCode: string
+  selfPaced?: boolean
   onPart2Open: () => void
 }
 
-export default function BreakScreen({ participantCode, onPart2Open }: Props) {
+export default function BreakScreen({ participantCode, selfPaced = false, onPart2Open }: Props) {
   const instanceId = import.meta.env.VITE_INSTANCE_ID ?? 'test'
 
   useEffect(() => {
+    if (selfPaced) return
+
     let fired = false
     function advance() {
       if (fired) return
@@ -45,7 +48,7 @@ export default function BreakScreen({ participantCode, onPart2Open }: Props) {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [instanceId, onPart2Open])
+  }, [instanceId, onPart2Open, selfPaced])
 
   return (
     <div className="screen" style={{ textAlign: 'center', paddingTop: '3rem' }}>
@@ -59,14 +62,27 @@ export default function BreakScreen({ participantCode, onPart2Open }: Props) {
         <h2 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '0.5rem' }}>
           Part 1 complete — take a break
         </h2>
-        <p className="prose" style={{ marginBottom: '1rem' }}>
-          You have finished all Part 1 items. The facilitator will open Part 2 shortly.
-          Please wait — this page will advance automatically.
-        </p>
-        <p style={{ fontSize: '0.8rem', color: '#64748b' }}>
-          <span className="waiting-pulse" />
-          Waiting for Part 2 to open…
-        </p>
+        {selfPaced ? (
+          <>
+            <p className="prose" style={{ marginBottom: '1.5rem' }}>
+              You have finished all Part 1 items. Continue when you are ready.
+            </p>
+            <button className="btn-primary" onClick={onPart2Open}>
+              Continue to Part 2
+            </button>
+          </>
+        ) : (
+          <>
+            <p className="prose" style={{ marginBottom: '1rem' }}>
+              You have finished all Part 1 items. The facilitator will open Part 2 shortly.
+              Please wait — this page will advance automatically.
+            </p>
+            <p style={{ fontSize: '0.8rem', color: '#64748b' }}>
+              <span className="waiting-pulse" />
+              Waiting for Part 2 to open…
+            </p>
+          </>
+        )}
       </div>
 
       <div className="card" style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
