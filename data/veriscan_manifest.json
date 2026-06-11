@@ -42,8 +42,8 @@
       "veriscan_score": 0.000193,
       "detector_regime": "confident_correct",
       "p2_metadata": "Image file; claimed source: surveillance",
-      "p2_explanation": "",
-      "p2_limitations": ""
+      "p2_explanation": "The noise and compression characteristics across this frame are consistent with a single, unedited capture from a video surveillance source, and VeriScan found no statistical signatures of synthetic generation or splicing. This is why it reports the image as authentic with high confidence.",
+      "p2_limitations": "VeriScan was trained primarily on high-resolution imagery and is less reliable on heavily compressed, low-light surveillance footage. A confident 'authentic' result does not rule out manipulation that compression may have masked."
     },
     {
       "id": 4,
@@ -165,8 +165,8 @@
       "veriscan_score": 0.502278,
       "detector_regime": "uncertain",
       "p2_metadata": "Image file; claimed source: surveillance",
-      "p2_explanation": "",
-      "p2_limitations": ""
+      "p2_explanation": "VeriScan found a mix of competing signals in this frame: some characteristics resemble a genuine surveillance capture, while others are atypical enough to raise the possibility of alteration. The evidence is too evenly balanced for the model to commit either way, so it abstains.",
+      "p2_limitations": "Borderline results are most common on low-resolution, compressed, or low-light footage, exactly the conditions where VeriScan is least reliable. An 'uncertain' verdict means the tool could not distinguish authentic from manipulated, not that the image is necessarily borderline in reality."
     },
     {
       "id": 14,
@@ -180,8 +180,8 @@
       "veriscan_score": 0.504713,
       "detector_regime": "uncertain",
       "p2_metadata": "Image file; claimed source: consumer photo",
-      "p2_explanation": "",
-      "p2_limitations": ""
+      "p2_explanation": "The signals in this photograph point in both directions, some consistent with an ordinary camera capture and some suggestive of editing or generation, without either dominating. VeriScan therefore cannot make a confident determination and reports the result as uncertain.",
+      "p2_limitations": "Images that have been resized, re-compressed, or lightly filtered can produce ambiguous signals that push VeriScan toward the uncertain range. The abstention reflects the limits of its analysis and should not be read as evidence for or against authenticity."
     },
     {
       "id": 15,
@@ -207,8 +207,8 @@
       "veriscan_score": 0.999907,
       "detector_regime": "confident_correct",
       "p2_metadata": "Image file; claimed source: surveillance",
-      "p2_explanation": "",
-      "p2_limitations": ""
+      "p2_explanation": "VeriScan detected patterns across this frame that are strongly associated with AI-generated or synthetically altered imagery, including frequency-domain artifacts uncharacteristic of a genuine camera sensor. The strength of these signals drives the high-confidence manipulation verdict.",
+      "p2_limitations": "This model is most accurate on high-resolution images; on compressed surveillance footage it can occasionally mistake compression artifacts for signs of generation. High confidence reflects signal strength, not a guarantee of correctness."
     },
     {
       "id": 17,
@@ -222,8 +222,8 @@
       "veriscan_score": 0.999834,
       "detector_regime": "confident_correct",
       "p2_metadata": "Image file; claimed source: consumer photo",
-      "p2_explanation": "",
-      "p2_limitations": ""
+      "p2_explanation": "The texture, noise, and frequency statistics of this photograph match patterns VeriScan associates with AI-generated or heavily edited images rather than a direct camera capture. These signatures are pronounced, producing the high-confidence manipulation verdict.",
+      "p2_limitations": "VeriScan assesses whole-image generation signatures and may not localise which region was altered. It performs best on standard photographic content and is less reliable on images re-saved or filtered multiple times."
     },
     {
       "id": 18,
@@ -357,8 +357,8 @@
       "veriscan_score": 0.001807,
       "detector_regime": "confident_correct",
       "p2_metadata": "Document file; claimed source: receipt",
-      "p2_explanation": "",
-      "p2_limitations": ""
+      "p2_explanation": "VeriScan found the visual and compression characteristics of this receipt consistent with an ordinary scan or photograph of a physical document, with no strong indicators of synthetic generation. This is why it reports the item as authentic with high confidence.",
+      "p2_limitations": "VeriScan is an image-level detector and does not verify document content. It may not detect localised edits such as an altered number, date, or signature on receipts and printed text. An 'authentic' result means no generation signature was found, not that every detail is genuine."
     },
     {
       "id": 29,
@@ -480,8 +480,8 @@
       "veriscan_score": 0.501519,
       "detector_regime": "uncertain",
       "p2_metadata": "Document file; claimed source: receipt",
-      "p2_explanation": "",
-      "p2_limitations": ""
+      "p2_explanation": "VeriScan's analysis of this receipt produced mixed signals, with no strong indication of either a clean scan or synthetic generation. Because the evidence is close to evenly split, the tool abstains rather than guess.",
+      "p2_limitations": "VeriScan is an image detector and is weakest on printed documents and receipts, where genuine scans and subtle edits can look statistically similar. An 'uncertain' result is especially uninformative here, and document content should be checked by other means."
     },
     {
       "id": 39,
@@ -495,8 +495,8 @@
       "veriscan_score": 0.501604,
       "detector_regime": "uncertain",
       "p2_metadata": "Document file; claimed source: email",
-      "p2_explanation": "",
-      "p2_limitations": ""
+      "p2_explanation": "The signals VeriScan extracted from this email image are ambiguous, partly consistent with a genuine screenshot or scan and partly atypical, with neither interpretation clearly supported. The tool reports uncertainty rather than committing to a verdict.",
+      "p2_limitations": "Screenshots and document images frequently fall into VeriScan's uncertain range because its training is centred on photographs, not rendered text. Abstention indicates the analysis was inconclusive, not that the item is genuinely borderline."
     },
     {
       "id": 40,
@@ -522,8 +522,8 @@
       "veriscan_score": 0.999721,
       "detector_regime": "confident_correct",
       "p2_metadata": "Document file; claimed source: document",
-      "p2_explanation": "",
-      "p2_limitations": ""
+      "p2_explanation": "VeriScan identified strong statistical signatures consistent with synthetic generation across this document image, of the kind produced when a document is created or substantially rendered by a generative model rather than scanned from an original. The strong signal underlies the high-confidence verdict.",
+      "p2_limitations": "Document analysis is harder for VeriScan than photographic imagery; it is tuned to whole-image generation signals and may miss subtle, localised edits to otherwise genuine documents, or over-flag unusual but legitimate scans. Treat a confident verdict as a strong signal, not proof."
     },
     {
       "id": 42,
@@ -537,8 +537,8 @@
       "veriscan_score": 0.999651,
       "detector_regime": "confident_correct",
       "p2_metadata": "Document file; claimed source: email",
-      "p2_explanation": "",
-      "p2_limitations": ""
+      "p2_explanation": "The rendering and compression characteristics of this email image carry patterns VeriScan strongly associates with synthetic generation rather than a genuine screenshot or scan. These signals are pronounced, producing a high-confidence manipulation verdict.",
+      "p2_limitations": "VeriScan evaluates the image as a whole and cannot confirm whether specific text was altered. On documents and screenshots it is less reliable than on photographs, and a confident result reflects signal strength rather than certainty about which elements changed."
     },
     {
       "id": 43,
