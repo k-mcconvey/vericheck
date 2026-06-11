@@ -95,3 +95,98 @@ export async function setGroup(
     return { ok: false, error: String(e) }
   }
 }
+
+export interface DisplayItem {
+  id: number
+  image_filename: string
+  type: string
+  family: string
+  case_context: string
+  stakes_tag: string
+  presentation_index: number
+}
+
+export async function getSessionItems(
+  participantCode: string,
+): Promise<{ items: DisplayItem[]; group: string; total: number } | { error: string }> {
+  try {
+    const { data, error } = await supabase.functions.invoke('get-session-items', {
+      body: { participant_code: participantCode },
+    })
+    if (error) return { error: error.message }
+    if (data?.error) return { error: data.error }
+    return data as { items: DisplayItem[]; group: string; total: number }
+  } catch (e) {
+    return { error: String(e) }
+  }
+}
+
+export async function logItemPresented(
+  participantCode: string,
+  itemId: number,
+  presentationIndex: number,
+  clientTs: number,
+): Promise<void> {
+  try {
+    await supabase.functions.invoke('log-item-presented', {
+      body: {
+        participant_code: participantCode,
+        item_id: itemId,
+        presentation_index: presentationIndex,
+        client_ts: clientTs,
+      },
+    })
+  } catch {
+    // Fire-and-forget; idempotent on retry
+  }
+}
+
+export async function consultVeriScan(
+  participantCode: string,
+  itemId: number,
+  presentationIndex: number,
+  clientTs: number,
+): Promise<{ verdict: string; abstained: boolean; confidence: string | null } | { error: string }> {
+  try {
+    const { data, error } = await supabase.functions.invoke('consult-veriscan', {
+      body: {
+        participant_code: participantCode,
+        item_id: itemId,
+        presentation_index: presentationIndex,
+        client_ts: clientTs,
+      },
+    })
+    if (error) return { error: error.message }
+    if (data?.error) return { error: data.error }
+    return data as { verdict: string; abstained: boolean; confidence: string | null }
+  } catch (e) {
+    return { error: String(e) }
+  }
+}
+
+export async function commitJudgment(
+  participantCode: string,
+  itemId: number,
+  finalJudgment: 'authentic' | 'manipulated' | 'cannot_tell',
+  presentationIndex: number,
+  presentedAtTs: number,
+  committedAtTs: number,
+): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const { data, error } = await supabase.functions.invoke('commit-judgment', {
+      body: {
+        participant_code: participantCode,
+        item_id: itemId,
+        final_judgment: finalJudgment,
+        presentation_index: presentationIndex,
+        presented_at_ts: presentedAtTs,
+        committed_at_ts: committedAtTs,
+      },
+    })
+    if (error) return { ok: false, error: error.message }
+    if (data?.error) return { ok: false, error: data.error }
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: String(e) }
+  }
+}

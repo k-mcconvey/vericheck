@@ -28,7 +28,10 @@ Deno.serve(async (req) => {
 
     const seedArr = new Uint32Array(1)
     crypto.getRandomValues(seedArr)
-    const order_seed = seedArr[0]
+    // Mask to [0, 2147483647] so the value fits PostgreSQL's signed integer type.
+    // The mulberry32 shuffle in get-session-items uses >>> 0 (no-op for values ≤ 2^31-1),
+    // so both functions derive identical item orders from the same seed.
+    const order_seed = seedArr[0] & 0x7FFFFFFF
 
     const { error } = await sb.from('participants').insert({
       participant_code,
