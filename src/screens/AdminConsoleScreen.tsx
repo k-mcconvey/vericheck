@@ -560,12 +560,12 @@ function LeaderboardTab({ instanceId }: { instanceId: string }) {
           <LeaderboardCategory
             title="Most Accurate"
             rows={data.most_accurate}
-            renderMetric={e => `${Math.round((e as { accuracy: number }).accuracy * 100)}% (${(e as { correct: number }).correct}/${(e as { total: number }).total})`}
+            renderMetric={e => `${Math.round(e.accuracy * 100)}% (${e.correct}/${e.total})`}
           />
           <LeaderboardCategory
             title="Best Error Catchers"
             rows={data.best_error_catchers}
-            renderMetric={e => `${(e as { errors_caught: number }).errors_caught} caught`}
+            renderMetric={e => `${e.errors_caught} caught`}
           />
         </>
       )}
@@ -573,14 +573,14 @@ function LeaderboardTab({ instanceId }: { instanceId: string }) {
   )
 }
 
-function LeaderboardCategory({
+function LeaderboardCategory<R extends { participant_code: string }>({
   title,
   rows,
   renderMetric,
 }: {
   title: string
-  rows: Array<{ participant_code: string } & Record<string, unknown>>
-  renderMetric: (row: { participant_code: string } & Record<string, unknown>) => string
+  rows: Array<R>
+  renderMetric: (row: R) => string
 }) {
   return (
     <div className="card">
