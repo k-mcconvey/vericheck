@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import LandingScreen from './screens/LandingScreen'
 import ConsentScreen from './screens/ConsentScreen'
 import DemographicsScreen from './screens/DemographicsScreen'
@@ -8,6 +8,41 @@ import Part1Screen from './screens/Part1Screen'
 import BreakScreen from './screens/BreakScreen'
 import Part2Screen from './screens/Part2Screen'
 import ResultsScreen from './screens/ResultsScreen'
+import AdminLoginScreen from './screens/AdminLoginScreen'
+import AdminConsoleScreen from './screens/AdminConsoleScreen'
+import { supabase } from './data/dataClient'
+
+// ── Admin app (gated by Supabase Auth) ───────────────────────────────────────
+
+function AdminApp() {
+  const [loggedIn, setLoggedIn] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setLoggedIn(!!session)
+    })
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setLoggedIn(!!session)
+    })
+    return () => subscription.unsubscribe()
+  }, [])
+
+  if (loggedIn === null) {
+    return (
+      <div className="screen" style={{ paddingTop: '3rem', textAlign: 'center' }}>
+        <p className="prose">Loading…</p>
+      </div>
+    )
+  }
+
+  if (!loggedIn) {
+    return <AdminLoginScreen onSignedIn={() => { /* onAuthStateChange updates loggedIn */ }} />
+  }
+
+  return <AdminConsoleScreen onSignOut={() => { /* onAuthStateChange updates loggedIn */ }} />
+}
+
+// ── Participant app ───────────────────────────────────────────────────────────
 
 type Screen =
   | 'landing'
@@ -43,7 +78,7 @@ function persist(updates: Partial<{ screen: Screen; code: string; seed: number; 
   if (updates.group !== undefined) sessionStorage.setItem(SS.group, updates.group)
 }
 
-export default function App() {
+function ParticipantApp() {
   const initial = readSession()
   const [screen, setScreen] = useState<Screen>(initial.screen)
   const [participantCode, setParticipantCode] = useState(initial.code)
@@ -130,4 +165,11 @@ export default function App() {
         />
       )
   }
+}
+
+// ── Top-level router: /admin → AdminApp, everything else → ParticipantApp ─────
+
+export default function App() {
+  const isAdmin = window.location.pathname.startsWith('/admin')
+  return isAdmin ? <AdminApp /> : <ParticipantApp />
 }

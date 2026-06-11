@@ -315,7 +315,8 @@ export async function getLeaderboard(
   instanceId: string,
 ): Promise<LeaderboardData | { error: string }> {
   try {
-    const { data, error } = await supabase.functions.invoke('admin-get-leaderboard', {
+    // Participant-facing: deployed with --no-verify-jwt
+    const { data, error } = await supabase.functions.invoke('get-leaderboard', {
       body: { instance_id: instanceId },
     })
     if (error) return { error: error.message }
@@ -350,5 +351,173 @@ export async function commitJudgmentP2(
     return data as { ok: boolean; total_score: number }
   } catch (e) {
     return { ok: false, error: String(e) }
+  }
+}
+
+// ── Admin functions (all require an active Supabase Auth session) ─────────────
+
+export interface ParticipantInfo {
+  participant_code: string
+  group: string | null
+  status: string
+  consented_research: boolean
+  started_at: string | null
+  response_count: number
+  updated?: boolean
+}
+
+export interface MonitorData {
+  total: number
+  by_status: { in_progress: number; completed: number; withdrawn: number; incomplete: number }
+  by_group: { A: number; B: number; C: number; unset: number }
+  part1_active: number
+  part2_active: number
+}
+
+export async function adminSetPhase(
+  instanceId: string,
+  phase: string,
+): Promise<{ ok: boolean } | { error: string }> {
+  try {
+    const { data, error } = await supabase.functions.invoke('admin-set-phase', {
+      body: { instance_id: instanceId, phase },
+    })
+    if (error) return { error: error.message }
+    if (data?.error) return { error: data.error }
+    return { ok: true }
+  } catch (e) {
+    return { error: String(e) }
+  }
+}
+
+export async function adminToggleLeaderboard(
+  instanceId: string,
+  revealed: boolean,
+): Promise<{ ok: boolean } | { error: string }> {
+  try {
+    const { data, error } = await supabase.functions.invoke('admin-set-phase', {
+      body: { instance_id: instanceId, leaderboard_revealed: revealed },
+    })
+    if (error) return { error: error.message }
+    if (data?.error) return { error: data.error }
+    return { ok: true }
+  } catch (e) {
+    return { error: String(e) }
+  }
+}
+
+export async function adminGetMonitor(
+  instanceId: string,
+): Promise<MonitorData | { error: string }> {
+  try {
+    const { data, error } = await supabase.functions.invoke('admin-get-monitor', {
+      body: { instance_id: instanceId },
+    })
+    if (error) return { error: error.message }
+    if (data?.error) return { error: data.error }
+    return data as MonitorData
+  } catch (e) {
+    return { error: String(e) }
+  }
+}
+
+export async function adminLookupParticipant(
+  instanceId: string,
+  participantCode: string,
+): Promise<ParticipantInfo | { error: string }> {
+  try {
+    const { data, error } = await supabase.functions.invoke('admin-correct-group', {
+      body: { instance_id: instanceId, participant_code: participantCode },
+    })
+    if (error) return { error: error.message }
+    if (data?.error) return { error: data.error }
+    return data as ParticipantInfo
+  } catch (e) {
+    return { error: String(e) }
+  }
+}
+
+export async function adminCorrectGroup(
+  instanceId: string,
+  participantCode: string,
+  newGroup: 'A' | 'B' | 'C',
+): Promise<ParticipantInfo | { error: string }> {
+  try {
+    const { data, error } = await supabase.functions.invoke('admin-correct-group', {
+      body: { instance_id: instanceId, participant_code: participantCode, new_group: newGroup },
+    })
+    if (error) return { error: error.message }
+    if (data?.error) return { error: data.error }
+    return data as ParticipantInfo
+  } catch (e) {
+    return { error: String(e) }
+  }
+}
+
+export async function adminWithdraw(
+  instanceId: string,
+  participantCode: string,
+  confirmCode: string,
+): Promise<{ ok: boolean; deleted_code: string } | { error: string }> {
+  try {
+    const { data, error } = await supabase.functions.invoke('admin-withdraw', {
+      body: { instance_id: instanceId, participant_code: participantCode, confirm_code: confirmCode },
+    })
+    if (error) return { error: error.message }
+    if (data?.error) return { error: data.error }
+    return data as { ok: boolean; deleted_code: string }
+  } catch (e) {
+    return { error: String(e) }
+  }
+}
+
+export async function adminExport(
+  instanceId: string,
+  exportType: string,
+  includeExcluded = false,
+): Promise<{ csv: string } | { error: string }> {
+  try {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return { error: 'Not authenticated' }
+
+    // Raw fetch so we receive CSV text, not parsed JSON
+    const resp = await fetch(
+      `${supabaseUrl}/functions/v1/admin-export`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+          apikey: supabaseAnonKey,
+        },
+        body: JSON.stringify({ instance_id: instanceId, export_type: exportType, include_excluded: includeExcluded }),
+      },
+    )
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({ error: 'Export failed' }))
+      return { error: (err as { error: string }).error ?? 'Export failed' }
+    }
+
+    const csv = await resp.text()
+    return { csv }
+  } catch (e) {
+    return { error: String(e) }
+  }
+}
+
+export async function adminGetLeaderboard(
+  instanceId: string,
+): Promise<LeaderboardData | { error: string }> {
+  try {
+    // Admin console is authenticated; JWT is included automatically by supabase-js
+    const { data, error } = await supabase.functions.invoke('admin-get-leaderboard', {
+      body: { instance_id: instanceId },
+    })
+    if (error) return { error: error.message }
+    if (data?.error) return { error: data.error }
+    return data as LeaderboardData
+  } catch (e) {
+    return { error: String(e) }
   }
 }

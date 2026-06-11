@@ -1,5 +1,5 @@
-// Admin leaderboard — called from the admin console with a verified session.
-// JWT required — do NOT deploy with --no-verify-jwt.
+// Participant-facing leaderboard endpoint — no JWT required.
+// Deploy with: npx supabase functions deploy get-leaderboard --no-verify-jwt
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const CORS = {
@@ -10,23 +10,10 @@ const CORS = {
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, 'Content-Type': 'application/json' } })
 
-async function requireAuth(req: Request): Promise<string | null> {
-  const authHeader = req.headers.get('Authorization')
-  if (!authHeader) return null
-  const token = authHeader.replace('Bearer ', '')
-  const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!)
-  const { data: { user }, error } = await sb.auth.getUser(token)
-  if (error || !user) return null
-  return user.id
-}
-
 const TOP_N = 5
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })
-
-  const uid = await requireAuth(req)
-  if (!uid) return json({ error: 'Unauthorized' }, 401)
 
   try {
     const { instance_id } = await req.json()
@@ -59,14 +46,8 @@ Deno.serve(async (req) => {
 
     const agg: Record<string, Agg> = {}
     for (const p of (participants ?? [])) {
-      agg[p.participant_code] = {
-        total_score: p.total_score ?? 0,
-        correct: 0,
-        total: 0,
-        errors_caught: 0,
-      }
+      agg[p.participant_code] = { total_score: p.total_score ?? 0, correct: 0, total: 0, errors_caught: 0 }
     }
-
     for (const r of (responses ?? [])) {
       if (!agg[r.participant_code]) continue
       agg[r.participant_code].total++
@@ -82,29 +63,24 @@ Deno.serve(async (req) => {
       accuracy: a.total > 0 ? a.correct / a.total : 0,
     }))
 
-    const topScorers = [...entries]
+    const top_scorers = [...entries]
       .sort((a, b) => b.total_score - a.total_score)
       .slice(0, TOP_N)
       .map(e => ({ participant_code: e.participant_code, total_score: e.total_score }))
 
-    const mostAccurate = [...entries]
+    const most_accurate = [...entries]
       .filter(e => e.total > 0)
       .sort((a, b) => b.accuracy - a.accuracy || b.total_score - a.total_score)
       .slice(0, TOP_N)
-      .map(e => ({
-        participant_code: e.participant_code,
-        accuracy: e.accuracy,
-        correct: e.correct,
-        total: e.total,
-      }))
+      .map(e => ({ participant_code: e.participant_code, accuracy: e.accuracy, correct: e.correct, total: e.total }))
 
-    const bestErrorCatchers = [...entries]
+    const best_error_catchers = [...entries]
       .filter(e => e.errors_caught > 0)
       .sort((a, b) => b.errors_caught - a.errors_caught || b.total_score - a.total_score)
       .slice(0, TOP_N)
       .map(e => ({ participant_code: e.participant_code, errors_caught: e.errors_caught }))
 
-    return json({ top_scorers: topScorers, most_accurate: mostAccurate, best_error_catchers: bestErrorCatchers })
+    return json({ top_scorers, most_accurate, best_error_catchers })
   } catch (err) {
     return json({ error: String(err) }, 500)
   }
