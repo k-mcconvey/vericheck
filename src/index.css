@@ -555,6 +555,55 @@ body {
   text-align: center;
 }
 
+/* ── Rationale textarea ───────────────────────────────────────────────── */
+
+.rationale-field {
+  margin-top: 1.25rem;
+}
+
+.rationale-label {
+  display: block;
+  font-size: 0.82rem;
+  color: #94a3b8;
+  margin-bottom: 0.35rem;
+}
+
+.rationale-label span {
+  font-weight: 400;
+  color: #64748b;
+}
+
+.rationale-textarea {
+  width: 100%;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  color: #e2e8f0;
+  font-size: 0.9rem;
+  font-family: inherit;
+  line-height: 1.5;
+  padding: 0.6rem 0.75rem;
+  resize: vertical;
+  min-height: 72px;
+}
+
+.rationale-textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+}
+
+.rationale-textarea:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.rationale-hint {
+  font-size: 0.75rem;
+  color: #475569;
+  margin-top: 0.3rem;
+}
+
 /* ── Interstitial overlay ─────────────────────────────────────────────── */
 
 .p1-interstitial-overlay {

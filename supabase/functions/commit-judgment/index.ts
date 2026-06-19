@@ -12,8 +12,10 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })
 
   try {
-    const { participant_code, item_id, final_judgment, presentation_index, presented_at_ts, committed_at_ts } =
+    const { participant_code, item_id, final_judgment, presentation_index, presented_at_ts, committed_at_ts, rationale } =
       await req.json()
+    const rationaleValue: string | null =
+      typeof rationale === 'string' && rationale.trim() ? rationale.trim() : null
 
     if (!participant_code || item_id == null || !final_judgment || presentation_index == null) {
       return json(
@@ -115,6 +117,7 @@ Deno.serve(async (req) => {
         item_score,
         overrode_tool,
         override_correct,
+        rationale: rationaleValue,
       },
       { onConflict: 'participant_code,item_id,phase' },
     )

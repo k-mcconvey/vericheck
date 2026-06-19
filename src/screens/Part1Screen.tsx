@@ -54,6 +54,7 @@ export default function Part1Screen({ participantCode, group, onDone }: Props) {
   const [actionError, setActionError] = useState('')
 
   const [selectedJudgment, setSelectedJudgment] = useState<Judgment | null>(null)
+  const [rationale, setRationale] = useState('')
   const [hasConsulted, setHasConsulted] = useState(false)
   const [veriscanResult, setVeriscanResult] = useState<{
     verdict: string
@@ -99,6 +100,7 @@ export default function Part1Screen({ participantCode, group, onDone }: Props) {
     setCurrentIndex(idx)
     sessionStorage.setItem(SS_IDX, String(idx))
     setSelectedJudgment(null)
+    setRationale('')
     setHasConsulted(false)
     setVeriscanResult(null)
     setImgFailed(false)
@@ -151,6 +153,7 @@ export default function Part1Screen({ participantCode, group, onDone }: Props) {
       item.presentation_index,
       presentedAtRef.current,
       Date.now(),
+      rationale,
     )
 
     if ('error' in result || !result.ok) {
@@ -345,6 +348,22 @@ export default function Part1Screen({ participantCode, group, onDone }: Props) {
             You can submit in {formatDwellCountdown(secsLeft)}
           </p>
         )}
+
+        <div className="rationale-field">
+          <label className="rationale-label" htmlFor="p1-rationale">
+            Why did you make this decision? <span>(optional)</span>
+          </label>
+          <textarea
+            id="p1-rationale"
+            className="rationale-textarea"
+            value={rationale}
+            onChange={(e) => setRationale(e.target.value)}
+            maxLength={1000}
+            rows={3}
+            disabled={busy}
+          />
+          <p className="rationale-hint">Please don't include any identifying information.</p>
+        </div>
 
         <button
           className="btn btn-primary btn-full btn-lg"

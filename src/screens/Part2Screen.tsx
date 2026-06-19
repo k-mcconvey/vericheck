@@ -47,6 +47,7 @@ export default function Part2Screen({ participantCode, onDone }: Props) {
   const [actionError, setActionError] = useState('')
 
   const [selectedJudgment, setSelectedJudgment] = useState<Judgment | null>(null)
+  const [rationale, setRationale] = useState('')
   // Map from tier number (1–5) to content returned by the server
   const [unlockedTiers, setUnlockedTiers] = useState<Map<number, TierContent>>(new Map())
 
@@ -121,6 +122,7 @@ export default function Part2Screen({ participantCode, onDone }: Props) {
     setCurrentIndex(idx)
     sessionStorage.setItem(SS_IDX, String(idx))
     setSelectedJudgment(null)
+    setRationale('')
     setUnlockedTiers(new Map())
     setImgFailed(false)
     setActionError('')
@@ -176,6 +178,7 @@ export default function Part2Screen({ participantCode, onDone }: Props) {
       item.presentation_index,
       presentedAtRef.current,
       Date.now(),
+      rationale,
     )
 
     if ('error' in result || !result.ok) {
@@ -383,6 +386,22 @@ export default function Part2Screen({ participantCode, onDone }: Props) {
             You can submit in {formatDwellCountdown(secsLeft)}
           </p>
         )}
+
+        <div className="rationale-field">
+          <label className="rationale-label" htmlFor="p2-rationale">
+            Why did you make this decision? <span>(optional)</span>
+          </label>
+          <textarea
+            id="p2-rationale"
+            className="rationale-textarea"
+            value={rationale}
+            onChange={(e) => setRationale(e.target.value)}
+            maxLength={1000}
+            rows={3}
+            disabled={busy}
+          />
+          <p className="rationale-hint">Please don't include any identifying information.</p>
+        </div>
 
         <button
           className="btn btn-primary btn-full btn-lg"

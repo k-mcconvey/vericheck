@@ -171,6 +171,7 @@ export async function commitJudgment(
   presentationIndex: number,
   presentedAtTs: number,
   committedAtTs: number,
+  rationale?: string,
 ): Promise<{ ok: boolean; score?: number; error?: string }> {
   try {
     const { data, error } = await supabase.functions.invoke('commit-judgment', {
@@ -181,6 +182,7 @@ export async function commitJudgment(
         presentation_index: presentationIndex,
         presented_at_ts: presentedAtTs,
         committed_at_ts: committedAtTs,
+        rationale: rationale ?? null,
       },
     })
     if (error) return { ok: false, error: error.message }
@@ -334,6 +336,7 @@ export async function commitJudgmentP2(
   presentationIndex: number,
   presentedAtTs: number,
   committedAtTs: number,
+  rationale?: string,
 ): Promise<{ ok: boolean; total_score?: number; error?: string }> {
   try {
     const { data, error } = await supabase.functions.invoke('commit-judgment-p2', {
@@ -344,6 +347,7 @@ export async function commitJudgmentP2(
         presentation_index: presentationIndex,
         presented_at_ts: presentedAtTs,
         committed_at_ts: committedAtTs,
+        rationale: rationale ?? null,
       },
     })
     if (error) return { ok: false, error: error.message }
