@@ -6,6 +6,7 @@ import {
   commitJudgment,
   type DisplayItem,
 } from '../data/dataClient'
+import { useItemDwellTimer } from '../hooks/useItemDwellTimer'
 
 interface Props {
   participantCode: string
@@ -20,6 +21,12 @@ const SS_SCORE = 'vc_p1_score'
 const SS_CONSULTS = 'vc_p1_consults'
 
 const STARTING_SCORE = Number(import.meta.env.VITE_STARTING_SCORE ?? 0)
+
+function formatDwellCountdown(secs: number): string {
+  const m = Math.floor(secs / 60)
+  const s = secs % 60
+  return `${m}:${s.toString().padStart(2, '0')}`
+}
 
 function pluralConsults(n: number) {
   if (n === 0) return 'No consults'
@@ -57,8 +64,10 @@ export default function Part1Screen({ participantCode, group, onDone }: Props) {
   const [imgFailed, setImgFailed] = useState(false)
   const [pendingIndex, setPendingIndex] = useState(0)
   const [showInterstitial, setShowInterstitial] = useState(false)
+  const [itemStartMs, setItemStartMs] = useState(() => Date.now())
 
   const presentedAtRef = useRef<number>(Date.now())
+  const { secsLeft, ready: timerReady } = useItemDwellTimer(itemStartMs)
 
   // Fetch items once on mount; sync score from server to stay authoritative on resume
   useEffect(() => {
@@ -96,6 +105,7 @@ export default function Part1Screen({ participantCode, group, onDone }: Props) {
     setActionError('')
     const now = Date.now()
     presentedAtRef.current = now
+    setItemStartMs(now)
     logItemPresented(participantCode, itemList[idx].id, itemList[idx].presentation_index, now)
   }
 
@@ -323,18 +333,24 @@ export default function Part1Screen({ participantCode, group, onDone }: Props) {
               key={j}
               className={`btn p1-judgment-btn${selectedJudgment === j ? ' selected' : ''}`}
               onClick={() => setSelectedJudgment(j)}
-              disabled={busy}
+              disabled={busy || !timerReady}
             >
               {j === 'authentic' ? 'Authentic' : j === 'manipulated' ? 'Manipulated' : 'Cannot tell'}
             </button>
           ))}
         </div>
 
+        {!timerReady && (
+          <p className="dwell-countdown" aria-live="polite">
+            You can submit in {formatDwellCountdown(secsLeft)}
+          </p>
+        )}
+
         <button
           className="btn btn-primary btn-full btn-lg"
           style={{ marginTop: '1rem' }}
           onClick={handleCommit}
-          disabled={!selectedJudgment || busy}
+          disabled={!selectedJudgment || busy || !timerReady}
         >
           {busy ? 'Submitting…' : 'Commit judgment'}
         </button>

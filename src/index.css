@@ -548,6 +548,13 @@ body {
   cursor: not-allowed;
 }
 
+.dwell-countdown {
+  margin: 0.75rem 0 0;
+  font-size: 0.8rem;
+  color: #64748b;
+  text-align: center;
+}
+
 /* ── Interstitial overlay ─────────────────────────────────────────────── */
 
 .p1-interstitial-overlay {
