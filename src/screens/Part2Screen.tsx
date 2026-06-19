@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import {
+  supabase,
   getSessionItemsP2,
   logItemPresentedP2,
   unlockTier,
@@ -8,6 +9,7 @@ import {
   type TierContent,
 } from '../data/dataClient'
 import { useItemDwellTimer } from '../hooks/useItemDwellTimer'
+import { MIN_ITEM_SECONDS } from '../config'
 
 interface Props {
   participantCode: string
@@ -21,6 +23,7 @@ const SS_SCORE = 'vc_p2_score'
 const SS_UNLOCKS = 'vc_p2_unlocks'
 
 const TIER_NAMES = ['', 'Metadata', 'VeriScan Judgment', 'Confidence', 'Explanation', 'Limitations']
+const INSTANCE_ID = import.meta.env.VITE_INSTANCE_ID ?? 'test'
 
 function formatDwellCountdown(secs: number): string {
   const m = Math.floor(secs / 60)
@@ -55,10 +58,14 @@ export default function Part2Screen({ participantCode, onDone }: Props) {
   const [pendingIndex, setPendingIndex] = useState(0)
   const [showInterstitial, setShowInterstitial] = useState(false)
   const [itemStartMs, setItemStartMs] = useState(() => Date.now())
+  const [itemMinSeconds, setItemMinSeconds] = useState(MIN_ITEM_SECONDS)
 
   const presentedAtRef = useRef<number>(Date.now())
   const restoredForIndexRef = useRef<number>(-1)
-  const { secsLeft, ready: timerReady } = useItemDwellTimer(itemStartMs)
+  // Tracks the latest min_item_seconds from session_state; read at item-presentation time
+  // so live facilitator changes don't retroactively alter an in-progress countdown.
+  const sessionMinSecondsRef = useRef<number | null>(null)
+  const { secsLeft, ready: timerReady } = useItemDwellTimer(itemStartMs, itemMinSeconds)
 
   // Fetch items on mount; sync score from server
   useEffect(() => {
@@ -74,6 +81,31 @@ export default function Part2Screen({ participantCode, onDone }: Props) {
       setLoading(false)
     })
   }, [participantCode])
+
+  // Track session min_item_seconds via Realtime so presentItem can capture it at the right moment
+  useEffect(() => {
+    supabase
+      .from('session_state')
+      .select('min_item_seconds')
+      .eq('instance_id', INSTANCE_ID)
+      .single()
+      .then(({ data }) => {
+        sessionMinSecondsRef.current = data?.min_item_seconds ?? null
+      })
+
+    const ch = supabase
+      .channel(`p2-timer-${INSTANCE_ID}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'session_state', filter: `instance_id=eq.${INSTANCE_ID}` },
+        (payload) => {
+          sessionMinSecondsRef.current = payload.new.min_item_seconds ?? null
+        },
+      )
+      .subscribe()
+
+    return () => { supabase.removeChannel(ch) }
+  }, [])
 
   // When items load, present the current item
   useEffect(() => {
@@ -129,6 +161,8 @@ export default function Part2Screen({ participantCode, onDone }: Props) {
     const now = Date.now()
     presentedAtRef.current = now
     setItemStartMs(now)
+    // Capture the current session value so the countdown is fixed for this item's lifetime
+    setItemMinSeconds(sessionMinSecondsRef.current !== null ? sessionMinSecondsRef.current : MIN_ITEM_SECONDS)
     logItemPresentedP2(participantCode, itemList[idx].id, itemList[idx].presentation_index, now)
   }
 

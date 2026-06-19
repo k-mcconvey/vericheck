@@ -510,6 +510,22 @@ export async function adminExport(
   }
 }
 
+export async function adminSetTimer(
+  instanceId: string,
+  minItemSeconds: number | null,
+): Promise<{ ok: boolean; min_item_seconds: number | null } | { error: string }> {
+  try {
+    const { data, error } = await supabase.functions.invoke('admin-set-timer', {
+      body: { instance_id: instanceId, min_item_seconds: minItemSeconds },
+    })
+    if (error) return { error: error.message }
+    if (data?.error) return { error: data.error }
+    return data as { ok: boolean; min_item_seconds: number | null }
+  } catch (e) {
+    return { error: String(e) }
+  }
+}
+
 export async function adminGetLeaderboard(
   instanceId: string,
 ): Promise<LeaderboardData | { error: string }> {

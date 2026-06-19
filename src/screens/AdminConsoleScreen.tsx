@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../data/dataClient'
 import * as dc from '../data/dataClient'
+import { MIN_ITEM_SECONDS } from '../config'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -115,6 +116,8 @@ export default function AdminConsoleScreen({ onSignOut }: Props) {
 function ControlTab({ instanceId }: { instanceId: string }) {
   const [phase, setPhase] = useState<Phase | null>(null)
   const [lbRevealed, setLbRevealed] = useState(false)
+  const [minItemSeconds, setMinItemSeconds] = useState<number | null>(null)
+  const [timerInput, setTimerInput] = useState('')
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -123,13 +126,16 @@ function ControlTab({ instanceId }: { instanceId: string }) {
   useEffect(() => {
     supabase
       .from('session_state')
-      .select('current_phase, leaderboard_revealed')
+      .select('current_phase, leaderboard_revealed, min_item_seconds')
       .eq('instance_id', instanceId)
       .single()
       .then(({ data }) => {
         if (data) {
           setPhase(data.current_phase as Phase)
           setLbRevealed(!!data.leaderboard_revealed)
+          const cur = data.min_item_seconds ?? null
+          setMinItemSeconds(cur)
+          setTimerInput(cur !== null ? String(cur) : '')
         }
         setLoading(false)
       })
@@ -142,6 +148,8 @@ function ControlTab({ instanceId }: { instanceId: string }) {
         (payload) => {
           setPhase(payload.new.current_phase as Phase)
           setLbRevealed(!!payload.new.leaderboard_revealed)
+          setMinItemSeconds(payload.new.min_item_seconds ?? null)
+          // Don't overwrite timerInput — admin may be mid-edit
         },
       )
       .subscribe()
@@ -164,6 +172,30 @@ function ControlTab({ instanceId }: { instanceId: string }) {
     setBusy(false)
     if ('error' in result) setError(result.error)
     else setMsg(next ? 'Leaderboard revealed to participants.' : 'Leaderboard hidden.')
+  }
+
+  async function setTimerAction() {
+    const raw = timerInput.trim()
+    const parsed = raw === '' ? null : parseInt(raw, 10)
+    if (parsed !== null && (isNaN(parsed) || parsed < 0 || parsed > 600)) {
+      setError('Dwell time must be empty (deployment default) or an integer 0–600.')
+      return
+    }
+    setError(''); setMsg(''); setBusy(true)
+    const result = await dc.adminSetTimer(instanceId, parsed)
+    setBusy(false)
+    if ('error' in result) {
+      setError(result.error)
+    } else {
+      setMinItemSeconds(result.min_item_seconds)
+      setMsg(
+        parsed === null
+          ? 'Dwell timer reset to deployment default.'
+          : parsed === 0
+          ? 'Dwell timer disabled (0 s — no minimum).'
+          : `Dwell timer set to ${parsed} s.`,
+      )
+    }
   }
 
   if (loading) return <p className="prose" style={{ padding: '1rem 0' }}>Loading session state…</p>
@@ -212,6 +244,60 @@ function ControlTab({ instanceId }: { instanceId: string }) {
             {lbRevealed ? 'Hide Leaderboard' : 'Reveal Leaderboard'}
           </button>
         </div>
+      </div>
+
+      <div className="card">
+        <div className="section-label">Per-Item Dwell Timer</div>
+        <p className="prose" style={{ fontSize: '0.85rem', marginBottom: '0.75rem' }}>
+          Currently:{' '}
+          <strong style={{ color: '#38bdf8' }}>
+            {minItemSeconds !== null
+              ? minItemSeconds === 0
+                ? 'Off (0 s)'
+                : `${minItemSeconds} s`
+              : `Default (${MIN_ITEM_SECONDS} s)`}
+          </strong>
+        </p>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
+          {([0, 30, 60, 90] as const).map((v) => (
+            <button
+              key={v}
+              className="btn btn-secondary"
+              style={{ minWidth: '3.75rem' }}
+              onClick={() => setTimerInput(String(v))}
+              disabled={busy}
+            >
+              {v === 0 ? 'Off (0)' : `${v} s`}
+            </button>
+          ))}
+          <button
+            className="btn btn-secondary"
+            style={{ minWidth: '3.75rem' }}
+            onClick={() => setTimerInput('')}
+            disabled={busy}
+            title={`Reset to deployment default (${MIN_ITEM_SECONDS} s)`}
+          >
+            Default
+          </button>
+        </div>
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+          <input
+            type="number"
+            className="admin-code-input"
+            style={{ width: '6rem' }}
+            placeholder="0–600"
+            min={0}
+            max={600}
+            value={timerInput}
+            onChange={(e) => setTimerInput(e.target.value)}
+          />
+          <button className="btn btn-primary" onClick={setTimerAction} disabled={busy}>
+            {busy ? 'Setting…' : 'Set'}
+          </button>
+        </div>
+        <p style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.5rem' }}>
+          0 = no minimum. Empty = deployment default ({MIN_ITEM_SECONDS} s). Takes effect on the next item shown to each participant.
+        </p>
       </div>
     </div>
   )
