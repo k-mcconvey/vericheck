@@ -1,5 +1,6 @@
-import { useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '../data/dataClient'
+import BonusChallengeScreen from './BonusChallengeScreen'
 
 interface Props {
   participantCode: string
@@ -9,6 +10,7 @@ interface Props {
 
 export default function BreakScreen({ participantCode, selfPaced = false, onPart2Open }: Props) {
   const instanceId = import.meta.env.VITE_INSTANCE_ID ?? 'test'
+  const [showBonus, setShowBonus] = useState(false)
 
   useEffect(() => {
     if (selfPaced) return
@@ -50,6 +52,10 @@ export default function BreakScreen({ participantCode, selfPaced = false, onPart
     }
   }, [instanceId, onPart2Open, selfPaced])
 
+  if (showBonus) {
+    return <BonusChallengeScreen onBack={() => setShowBonus(false)} />
+  }
+
   return (
     <div className="screen" style={{ textAlign: 'center', paddingTop: '3rem' }}>
       <div className="code-bar" style={{ justifyContent: 'center' }}>
@@ -84,6 +90,14 @@ export default function BreakScreen({ participantCode, selfPaced = false, onPart
           </>
         )}
       </div>
+
+      <button
+        className="btn btn-secondary btn-full"
+        onClick={() => setShowBonus(true)}
+        style={{ marginBottom: '1.25rem' }}
+      >
+        While you wait: try the bonus challenge
+      </button>
 
       <div className="card" style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
         <p>

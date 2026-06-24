@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase, getResults, getLeaderboard, type ResultsData, type LeaderboardData } from '../data/dataClient'
+import BonusChallengeScreen from './BonusChallengeScreen'
 
 interface Props {
   participantCode: string
@@ -13,6 +14,7 @@ const round1 = (n: number) => n.toFixed(1)
 export default function ResultsScreen({ participantCode, group, selfPaced = false }: Props) {
   const instanceId = import.meta.env.VITE_INSTANCE_ID ?? 'test'
 
+  const [showBonus, setShowBonus] = useState(false)
   const [results, setResults] = useState<ResultsData | null>(null)
   const [resultsError, setResultsError] = useState('')
   const [resultsLoading, setResultsLoading] = useState(true)
@@ -81,6 +83,10 @@ export default function ResultsScreen({ participantCode, group, selfPaced = fals
 
     return () => { supabase.removeChannel(channel) }
   }, [instanceId, selfPaced])
+
+  if (showBonus) {
+    return <BonusChallengeScreen onBack={() => setShowBonus(false)} />
+  }
 
   return (
     <div className="screen">
@@ -217,6 +223,15 @@ export default function ResultsScreen({ participantCode, group, selfPaced = fals
           ) : null}
         </div>
       )}
+
+      {/* Bonus challenge */}
+      <button
+        className="btn btn-secondary btn-full"
+        onClick={() => setShowBonus(true)}
+        style={{ marginBottom: '1.25rem' }}
+      >
+        While you wait: try the bonus challenge
+      </button>
 
       {/* Withdrawal info */}
       <div className="card" style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
