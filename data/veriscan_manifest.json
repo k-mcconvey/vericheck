@@ -9,14 +9,17 @@
     {
       "id": 1,
       "image_filename": "1.png",
-      "phase": 1,
+      "phase": 2,
       "type": "image",
       "family": "consumer photo",
       "case_context": "Photograph submitted as evidence in a personal injury claim",
       "stakes_tag": "civil",
       "ground_truth": "authentic",
       "veriscan_score": 1.8e-05,
-      "detector_regime": "confident_correct"
+      "detector_regime": "confident_correct",
+      "p2_metadata": "Image file; claimed source: consumer photo",
+      "p2_explanation": "The noise, texture, and compression characteristics of this photograph are consistent with an ordinary camera capture, and VeriScan found no statistical signatures of synthetic generation or editing. This is why it reports the image as authentic with high confidence.",
+      "p2_limitations": "VeriScan performs best on standard photographic content and can be less reliable on images that have been re-saved, cropped, or filtered multiple times. A confident 'authentic' result does not guarantee that no localised edit is present."
     },
     {
       "id": 2,
@@ -60,14 +63,17 @@
     {
       "id": 5,
       "image_filename": "5.png",
-      "phase": 1,
+      "phase": 2,
       "type": "image",
       "family": "surveillance",
       "case_context": "CCTV/surveillance still submitted in a criminal matter",
       "stakes_tag": "criminal",
       "ground_truth": "authentic",
       "veriscan_score": 0.51551,
-      "detector_regime": "uncertain"
+      "detector_regime": "uncertain",
+      "p2_metadata": "Image file; claimed source: surveillance",
+      "p2_explanation": "VeriScan found a mix of competing signals in this surveillance frame: some characteristics resemble a genuine capture, while others are atypical enough to leave room for doubt. The evidence is too evenly balanced for the model to commit either way, so it abstains.",
+      "p2_limitations": "Borderline results are most common on low-resolution, compressed, or low-light surveillance footage \u2014 exactly the conditions where VeriScan is least reliable. An 'uncertain' verdict means the tool could not distinguish authentic from manipulated, not that the image is necessarily borderline in reality."
     },
     {
       "id": 6,
@@ -156,17 +162,14 @@
     {
       "id": 13,
       "image_filename": "13.png",
-      "phase": 2,
+      "phase": 1,
       "type": "image",
       "family": "surveillance",
       "case_context": "CCTV/surveillance still submitted in a criminal matter",
       "stakes_tag": "criminal",
       "ground_truth": "manipulated",
       "veriscan_score": 0.502278,
-      "detector_regime": "uncertain",
-      "p2_metadata": "Image file; claimed source: surveillance",
-      "p2_explanation": "VeriScan found a mix of competing signals in this frame: some characteristics resemble a genuine surveillance capture, while others are atypical enough to raise the possibility of alteration. The evidence is too evenly balanced for the model to commit either way, so it abstains.",
-      "p2_limitations": "Borderline results are most common on low-resolution, compressed, or low-light footage, exactly the conditions where VeriScan is least reliable. An 'uncertain' verdict means the tool could not distinguish authentic from manipulated, not that the image is necessarily borderline in reality."
+      "detector_regime": "uncertain"
     },
     {
       "id": 14,
@@ -201,17 +204,14 @@
     {
       "id": 16,
       "image_filename": "16.png",
-      "phase": 2,
+      "phase": 1,
       "type": "image",
       "family": "surveillance",
       "case_context": "CCTV/surveillance still submitted in a criminal matter",
       "stakes_tag": "criminal",
       "ground_truth": "manipulated",
       "veriscan_score": 0.999907,
-      "detector_regime": "confident_correct",
-      "p2_metadata": "Image file; claimed source: surveillance",
-      "p2_explanation": "VeriScan detected patterns across this frame that are strongly associated with AI-generated or synthetically altered imagery, including frequency-domain artifacts uncharacteristic of a genuine camera sensor. The strength of these signals drives the high-confidence manipulation verdict.",
-      "p2_limitations": "This model is most accurate on high-resolution images; on compressed surveillance footage it can occasionally mistake compression artifacts for signs of generation. High confidence reflects signal strength, not a guarantee of correctness."
+      "detector_regime": "confident_correct"
     },
     {
       "id": 17,
@@ -333,14 +333,17 @@
     {
       "id": 26,
       "image_filename": "26.png",
-      "phase": 1,
+      "phase": 2,
       "type": "document",
       "family": "document",
       "case_context": "Scanned document submitted in a contract dispute",
       "stakes_tag": "civil",
       "ground_truth": "authentic",
       "veriscan_score": 0.000498,
-      "detector_regime": "confident_correct"
+      "detector_regime": "confident_correct",
+      "p2_metadata": "Document file; claimed source: document",
+      "p2_explanation": "VeriScan found the visual and compression characteristics of this document image consistent with an ordinary scan or photograph of a physical document, with no strong indicators of synthetic generation. This is why it reports the item as authentic with high confidence.",
+      "p2_limitations": "VeriScan is an image-level detector and does not verify document content. It may not detect localised edits such as an altered number, date, or signature. An 'authentic' result means no generation signature was found, not that every detail is genuine."
     },
     {
       "id": 27,
@@ -516,17 +519,14 @@
     {
       "id": 41,
       "image_filename": "41.png",
-      "phase": 2,
+      "phase": 1,
       "type": "document",
       "family": "document",
       "case_context": "Scanned document submitted in a contract dispute",
       "stakes_tag": "civil",
       "ground_truth": "manipulated",
       "veriscan_score": 0.999721,
-      "detector_regime": "confident_correct",
-      "p2_metadata": "Document file; claimed source: document",
-      "p2_explanation": "VeriScan identified strong statistical signatures consistent with synthetic generation across this document image, of the kind produced when a document is created or substantially rendered by a generative model rather than scanned from an original. The strong signal underlies the high-confidence verdict.",
-      "p2_limitations": "Document analysis is harder for VeriScan than photographic imagery; it is tuned to whole-image generation signals and may miss subtle, localised edits to otherwise genuine documents, or over-flag unusual but legitimate scans. Treat a confident verdict as a strong signal, not proof."
+      "detector_regime": "confident_correct"
     },
     {
       "id": 42,
