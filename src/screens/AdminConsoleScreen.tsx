@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, type CSSProperties } from 'react'
 import { supabase } from '../data/dataClient'
 import * as dc from '../data/dataClient'
 import { MIN_ITEM_SECONDS } from '../config'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type AdminTab = 'control' | 'monitor' | 'participants' | 'leaderboard' | 'exports'
+type AdminTab = 'control' | 'monitor' | 'participants' | 'leaderboard' | 'exports' | 'item_stats'
 
 const PHASES = [
   'landing', 'consent', 'demographics', 'group_select',
@@ -67,6 +67,7 @@ export default function AdminConsoleScreen({ onSignOut }: Props) {
     participants: 'Participants',
     leaderboard: 'Leaderboard',
     exports: 'Exports',
+    item_stats: 'Item Stats',
   }
 
   return (
@@ -106,6 +107,7 @@ export default function AdminConsoleScreen({ onSignOut }: Props) {
         {tab === 'participants' && <ParticipantsTab instanceId={instanceId} />}
         {tab === 'leaderboard' && <LeaderboardTab instanceId={instanceId} />}
         {tab === 'exports' && <ExportsTab instanceId={instanceId} />}
+        {tab === 'item_stats' && <ItemStatsTab instanceId={instanceId} />}
       </div>
     </div>
   )
@@ -714,6 +716,156 @@ const EXPORT_DEFS = [
     hasExcludedToggle: false,
   },
 ] as const
+
+// ── Item Stats tab ─────────────────────────────────────────────────────────────
+
+function ItemStatsTab({ instanceId }: { instanceId: string }) {
+  const [data, setData] = useState<{ items: dc.ItemStat[] } | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [lastRefresh, setLastRefresh] = useState('')
+
+  async function refresh() {
+    setLoading(true); setError('')
+    const result = await dc.adminGetItemStats(instanceId)
+    setLoading(false)
+    if ('error' in result) {
+      setError(result.error)
+    } else {
+      setData(result)
+      setLastRefresh(new Date().toLocaleTimeString())
+    }
+  }
+
+  useEffect(() => { refresh() }, [instanceId])
+
+  const part1 = data?.items.filter(i => i.phase === '1') ?? []
+  const part2 = data?.items.filter(i => i.phase === '2') ?? []
+
+  function pctDisplay(v: number | null): string {
+    return v === null ? '—' : `${v}%`
+  }
+
+  function regimeLabel(r: string): string {
+    if (r === 'confident_correct') return 'Correct'
+    if (r === 'confident_error') return 'Error'
+    return 'Uncertain'
+  }
+
+  function regimeColor(r: string): string {
+    if (r === 'confident_correct') return '#34d399'
+    if (r === 'confident_error') return '#f87171'
+    return '#f59e0b'
+  }
+
+  const TH_STYLE: CSSProperties = {
+    textAlign: 'left',
+    padding: '0.35rem 0.6rem',
+    color: '#64748b',
+    fontWeight: 600,
+    fontSize: '0.72rem',
+    textTransform: 'uppercase',
+    letterSpacing: '0.06em',
+    whiteSpace: 'nowrap',
+  }
+
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+        <h2 className="screen-title" style={{ marginBottom: 0 }}>Item Stats</h2>
+        <button
+          className="btn btn-secondary"
+          onClick={refresh}
+          disabled={loading}
+          style={{ fontSize: '0.85rem', padding: '0.4rem 0.9rem' }}
+        >
+          {loading ? 'Refreshing…' : 'Refresh'}
+        </button>
+      </div>
+      {lastRefresh && (
+        <p style={{ fontSize: '0.8rem', color: '#475569', marginBottom: '1rem' }}>
+          Last updated: {lastRefresh}
+        </p>
+      )}
+      {error && <div className="error-banner">{error}</div>}
+      {data && (
+        <>
+          {([{ label: 'Part 1', rows: part1 }, { label: 'Part 2', rows: part2 }] as const).map(({ label, rows }) => (
+            <div key={label} className="card">
+              <div className="section-label">{label} — {rows.length} item{rows.length !== 1 ? 's' : ''}</div>
+              {rows.length === 0 ? (
+                <p className="prose" style={{ fontSize: '0.85rem', color: '#475569' }}>No items assigned.</p>
+              ) : (
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem', minWidth: '640px' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid #334155' }}>
+                        <th style={TH_STYLE}>ID</th>
+                        <th style={TH_STYLE}>Type</th>
+                        <th style={TH_STYLE}>Family</th>
+                        <th style={TH_STYLE}>Truth</th>
+                        <th style={TH_STYLE}>Regime</th>
+                        <th style={{ ...TH_STYLE, textAlign: 'right' }}>n</th>
+                        <th style={{ ...TH_STYLE, textAlign: 'right' }}>% Correct</th>
+                        <th style={{ ...TH_STYLE, textAlign: 'right' }}>% Wrong</th>
+                        <th style={{ ...TH_STYLE, textAlign: 'right' }}>% Abstain</th>
+                        <th style={{ ...TH_STYLE, textAlign: 'right' }}>VeriScan</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.map((item, i) => (
+                        <tr key={item.item_id} style={{ borderBottom: i < rows.length - 1 ? '1px solid #1e293b' : 'none' }}>
+                          <td style={{ padding: '0.45rem 0.6rem', fontFamily: 'ui-monospace, monospace', color: '#94a3b8' }}>
+                            {item.item_id}
+                          </td>
+                          <td style={{ padding: '0.45rem 0.6rem', color: '#cbd5e1' }}>{item.type}</td>
+                          <td style={{ padding: '0.45rem 0.6rem', color: '#cbd5e1' }}>{item.family}</td>
+                          <td style={{ padding: '0.45rem 0.6rem' }}>
+                            <span style={{
+                              display: 'inline-block',
+                              padding: '0.1rem 0.4rem',
+                              borderRadius: '4px',
+                              fontSize: '0.72rem',
+                              fontWeight: 600,
+                              background: item.ground_truth === 'authentic' ? '#052e16' : '#3b0a0a',
+                              color: item.ground_truth === 'authentic' ? '#86efac' : '#fca5a5',
+                            }}>
+                              {item.ground_truth === 'authentic' ? 'Auth' : 'Manip'}
+                            </span>
+                          </td>
+                          <td style={{ padding: '0.45rem 0.6rem', color: regimeColor(item.detector_regime), fontSize: '0.78rem', whiteSpace: 'nowrap' }}>
+                            {regimeLabel(item.detector_regime)}
+                          </td>
+                          <td style={{ padding: '0.45rem 0.6rem', color: '#38bdf8', fontWeight: 700, textAlign: 'right' }}>
+                            {item.n}
+                          </td>
+                          <td style={{ padding: '0.45rem 0.6rem', color: '#34d399', fontWeight: 700, textAlign: 'right' }}>
+                            {pctDisplay(item.pct_correct)}
+                          </td>
+                          <td style={{ padding: '0.45rem 0.6rem', color: '#f87171', textAlign: 'right' }}>
+                            {pctDisplay(item.pct_incorrect)}
+                          </td>
+                          <td style={{ padding: '0.45rem 0.6rem', color: '#94a3b8', textAlign: 'right' }}>
+                            {pctDisplay(item.pct_abstain)}
+                          </td>
+                          <td style={{ padding: '0.45rem 0.6rem', color: '#cbd5e1', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                            {item.n === 0 ? '—' : `${item.used_veriscan} (${pctDisplay(item.pct_used_veriscan)})`}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          ))}
+        </>
+      )}
+    </div>
+  )
+}
+
+// ── Exports tab ────────────────────────────────────────────────────────────────
 
 function ExportsTab({ instanceId }: { instanceId: string }) {
   const [includeExcluded, setIncludeExcluded] = useState(false)

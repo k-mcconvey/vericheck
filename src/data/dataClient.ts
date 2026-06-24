@@ -541,3 +541,33 @@ export async function adminGetLeaderboard(
     return { error: String(e) }
   }
 }
+
+export interface ItemStat {
+  item_id: number
+  phase: string
+  type: string
+  family: string
+  ground_truth: string
+  detector_regime: string
+  n: number
+  pct_correct: number | null
+  pct_incorrect: number | null
+  pct_abstain: number | null
+  used_veriscan: number
+  pct_used_veriscan: number | null
+}
+
+export async function adminGetItemStats(
+  instanceId: string,
+): Promise<{ items: ItemStat[] } | { error: string }> {
+  try {
+    const { data, error } = await supabase.functions.invoke('admin-get-item-stats', {
+      body: { instance_id: instanceId },
+    })
+    if (error) return { error: error.message }
+    if (data?.error) return { error: data.error }
+    return data as { items: ItemStat[] }
+  } catch (e) {
+    return { error: String(e) }
+  }
+}
