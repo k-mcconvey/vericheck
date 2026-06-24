@@ -186,14 +186,17 @@
     {
       "id": 15,
       "image_filename": "15.png",
-      "phase": "exclude",
+      "phase": 2,
       "type": "image",
       "family": "dashcam",
       "case_context": "Dashcam still submitted in a motor-vehicle accident dispute",
       "stakes_tag": "civil",
       "ground_truth": "manipulated",
       "veriscan_score": 0.545782,
-      "detector_regime": "uncertain"
+      "detector_regime": "uncertain",
+      "p2_metadata": "Image file; claimed source: dashcam",
+      "p2_explanation": "VeriScan found competing signals in this dashcam frame: some characteristics resemble a genuine capture, while others are atypical enough to raise the possibility of alteration. The evidence is too evenly balanced for the model to commit either way, so it abstains.",
+      "p2_limitations": "Borderline results are common on compressed, motion-blurred, or low-light dashcam footage \u2014 conditions where VeriScan is least reliable. An 'uncertain' verdict means the tool could not distinguish authentic from manipulated, not that the footage is necessarily borderline in reality."
     },
     {
       "id": 16,
@@ -252,14 +255,17 @@
     {
       "id": 20,
       "image_filename": "20.png",
-      "phase": "exclude",
+      "phase": 2,
       "type": "image",
       "family": "consumer photo",
       "case_context": "Photograph submitted as evidence in a personal injury claim",
       "stakes_tag": "civil",
       "ground_truth": "manipulated",
       "veriscan_score": 0.495888,
-      "detector_regime": "uncertain"
+      "detector_regime": "uncertain",
+      "p2_metadata": "Image file; claimed source: consumer photo",
+      "p2_explanation": "The signals in this photograph point in both directions \u2014 some consistent with an ordinary camera capture, some suggestive of editing or generation \u2014 without either dominating. VeriScan cannot make a confident determination and reports the result as uncertain.",
+      "p2_limitations": "Images that have been resized, re-compressed, or lightly filtered can produce ambiguous signals that push VeriScan toward the uncertain range. The abstention reflects the limits of its analysis and should not be read as evidence for or against authenticity."
     },
     {
       "id": 21,
@@ -288,14 +294,17 @@
     {
       "id": 23,
       "image_filename": "23.png",
-      "phase": "exclude",
+      "phase": 2,
       "type": "image",
       "family": "dashcam",
       "case_context": "Dashcam still submitted in a motor-vehicle accident dispute",
       "stakes_tag": "civil",
       "ground_truth": "manipulated",
       "veriscan_score": 0.999774,
-      "detector_regime": "confident_correct"
+      "detector_regime": "confident_correct",
+      "p2_metadata": "Image file; claimed source: dashcam",
+      "p2_explanation": "VeriScan detected patterns across this dashcam frame strongly associated with AI-generated or synthetically altered imagery, including frequency-domain artifacts uncharacteristic of a genuine camera sensor. The strength of these signals drives the high-confidence manipulation verdict.",
+      "p2_limitations": "VeriScan is most accurate on high-resolution images; on compressed dashcam footage it can occasionally mistake compression artifacts for signs of generation. High confidence reflects signal strength, not a guarantee of correctness."
     },
     {
       "id": 24,
@@ -471,32 +480,26 @@
     {
       "id": 38,
       "image_filename": "38.png",
-      "phase": 2,
+      "phase": "exclude",
       "type": "document",
       "family": "receipt",
       "case_context": "Receipt submitted in an insurance/fraud claim",
       "stakes_tag": "administrative",
       "ground_truth": "manipulated",
       "veriscan_score": 0.501519,
-      "detector_regime": "uncertain",
-      "p2_metadata": "Document file; claimed source: receipt",
-      "p2_explanation": "VeriScan's analysis of this receipt produced mixed signals, with no strong indication of either a clean scan or synthetic generation. Because the evidence is close to evenly split, the tool abstains rather than guess.",
-      "p2_limitations": "VeriScan is an image detector and is weakest on printed documents and receipts, where genuine scans and subtle edits can look statistically similar. An 'uncertain' result is especially uninformative here, and document content should be checked by other means."
+      "detector_regime": "uncertain"
     },
     {
       "id": 39,
       "image_filename": "39.png",
-      "phase": 2,
+      "phase": "exclude",
       "type": "document",
       "family": "email",
       "case_context": "Email submitted as evidence in an employment matter",
       "stakes_tag": "administrative",
       "ground_truth": "manipulated",
       "veriscan_score": 0.501604,
-      "detector_regime": "uncertain",
-      "p2_metadata": "Document file; claimed source: email",
-      "p2_explanation": "The signals VeriScan extracted from this email image are ambiguous, partly consistent with a genuine screenshot or scan and partly atypical, with neither interpretation clearly supported. The tool reports uncertainty rather than committing to a verdict.",
-      "p2_limitations": "Screenshots and document images frequently fall into VeriScan's uncertain range because its training is centred on photographs, not rendered text. Abstention indicates the analysis was inconclusive, not that the item is genuinely borderline."
+      "detector_regime": "uncertain"
     },
     {
       "id": 40,
@@ -528,17 +531,14 @@
     {
       "id": 42,
       "image_filename": "42.png",
-      "phase": 2,
+      "phase": "exclude",
       "type": "document",
       "family": "email",
       "case_context": "Email submitted as evidence in an employment matter",
       "stakes_tag": "administrative",
       "ground_truth": "manipulated",
       "veriscan_score": 0.999651,
-      "detector_regime": "confident_correct",
-      "p2_metadata": "Document file; claimed source: email",
-      "p2_explanation": "The rendering and compression characteristics of this email image carry patterns VeriScan strongly associates with synthetic generation rather than a genuine screenshot or scan. These signals are pronounced, producing a high-confidence manipulation verdict.",
-      "p2_limitations": "VeriScan evaluates the image as a whole and cannot confirm whether specific text was altered. On documents and screenshots it is less reliable than on photographs, and a confident result reflects signal strength rather than certainty about which elements changed."
+      "detector_regime": "confident_correct"
     },
     {
       "id": 43,
