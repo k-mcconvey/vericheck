@@ -1,43 +1,30 @@
-import { useState } from 'react'
-import { setGroup } from '../data/dataClient'
+import { useEffect, useRef, useState } from 'react'
+import { assignGroup } from '../data/dataClient'
 
 interface Props {
   participantCode: string
   onGroupSet: (group: 'A' | 'B' | 'C') => void
 }
 
-type Group = 'A' | 'B' | 'C'
-
 export default function GroupScreen({ participantCode, onGroupSet }: Props) {
-  const [selected, setSelected] = useState<Group | null>(null)
-  const [confirming, setConfirming] = useState(false)
-  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const called = useRef(false)
 
-  function handleSelect(g: Group) {
-    setSelected(g)
-    setConfirming(true)
-    setError(null)
-  }
+  useEffect(() => {
+    if (called.current) return
+    called.current = true
 
-  function handleCancel() {
-    setSelected(null)
-    setConfirming(false)
-    setError(null)
-  }
-
-  async function handleConfirm() {
-    if (!selected) return
-    setLoading(true)
-    setError(null)
-    const result = await setGroup(participantCode, selected)
-    setLoading(false)
-    if (!result.ok) {
-      setError(result.error ?? 'Unknown error')
-      return
-    }
-    onGroupSet(selected)
-  }
+    const instanceId = import.meta.env.VITE_INSTANCE_ID ?? 'test'
+    assignGroup(participantCode, instanceId).then((result) => {
+      if ('error' in result) {
+        setError(result.error)
+      } else if (result.group === 'A' || result.group === 'B' || result.group === 'C') {
+        onGroupSet(result.group)
+      } else {
+        setError(`Unexpected group value from server: ${result.group}`)
+      }
+    })
+  }, [participantCode, onGroupSet])
 
   return (
     <div className="screen">
@@ -46,61 +33,39 @@ export default function GroupScreen({ participantCode, onGroupSet }: Props) {
         <strong>{participantCode}</strong>
       </div>
 
-      <h1 className="screen-title">Group Selection</h1>
-      <p className="screen-sub">
-        Select the group letter the facilitator assigned to you.
-      </p>
+      <h1 className="screen-title">Assigning your group…</h1>
 
-      {!confirming && (
-        <div className="card">
-          <p className="section-label">Which group are you in?</p>
-          <div className="group-grid">
-            {(['A', 'B', 'C'] as Group[]).map((g) => (
-              <button
-                key={g}
-                className={`btn-group${selected === g ? ' selected' : ''}`}
-                onClick={() => handleSelect(g)}
-                aria-label={`Group ${g}`}
-              >
-                {g}
-              </button>
-            ))}
-          </div>
-          <p className="prose" style={{ fontSize: '0.8rem', color: '#64748b' }}>
-            If you are unsure which group you are in, ask the facilitator.
-          </p>
-        </div>
-      )}
-
-      {confirming && selected && (
-        <div className="card">
-          <div className="confirm-box">
-            <div className="big-letter">{selected}</div>
-            <p>You selected <strong>Group {selected}</strong>. Is that correct?</p>
-            <div className="confirm-actions">
-              <button
-                className="btn btn-secondary"
-                onClick={handleCancel}
-                disabled={loading}
-              >
-                Change
-              </button>
-              <button
-                className="btn btn-primary"
-                onClick={handleConfirm}
-                disabled={loading}
-              >
-                {loading ? 'Saving…' : 'Confirm'}
-              </button>
-            </div>
-          </div>
-        </div>
+      {!error && (
+        <p className="prose" style={{ textAlign: 'center', marginTop: '2rem' }}>
+          Please wait.
+        </p>
       )}
 
       {error && (
         <div className="error-banner">
-          <p>Could not save your group. Please try again or let the facilitator know.</p>
+          <p>Could not assign a group. Please let the facilitator know.</p>
           <p>Detail: {error}</p>
+          <button
+            className="btn btn-primary"
+            style={{ marginTop: '0.75rem' }}
+            onClick={() => {
+              called.current = false
+              setError(null)
+              const instanceId = import.meta.env.VITE_INSTANCE_ID ?? 'test'
+              called.current = true
+              assignGroup(participantCode, instanceId).then((result) => {
+                if ('error' in result) {
+                  setError(result.error)
+                } else if (result.group === 'A' || result.group === 'B' || result.group === 'C') {
+                  onGroupSet(result.group)
+                } else {
+                  setError(`Unexpected group value from server: ${result.group}`)
+                }
+              })
+            }}
+          >
+            Retry
+          </button>
         </div>
       )}
     </div>

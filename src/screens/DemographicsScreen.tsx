@@ -182,7 +182,7 @@ export default function DemographicsScreen({ participantCode, onCompleted }: Pro
         onClick={handleSubmit}
         disabled={!canSubmit}
       >
-        {loading ? 'Saving…' : 'Continue to group selection'}
+        {loading ? 'Saving…' : 'Continue'}
       </button>
     </div>
   )

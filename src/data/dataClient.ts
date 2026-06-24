@@ -80,19 +80,19 @@ export async function submitDemographics(
   }
 }
 
-export async function setGroup(
+export async function assignGroup(
   participantCode: string,
-  group: 'A' | 'B' | 'C',
-): Promise<{ ok: boolean; error?: string }> {
+  instanceId: string,
+): Promise<{ group: string } | { error: string }> {
   try {
     const { data, error } = await supabase.functions.invoke('set-group', {
-      body: { participant_code: participantCode, group },
+      body: { participant_code: participantCode, instance_id: instanceId },
     })
-    if (error) return { ok: false, error: error.message }
-    if (data?.error) return { ok: false, error: data.error }
-    return { ok: true }
+    if (error) return { error: error.message }
+    if (data?.error) return { error: data.error }
+    return { group: data.group as string }
   } catch (e) {
-    return { ok: false, error: String(e) }
+    return { error: String(e) }
   }
 }
 
