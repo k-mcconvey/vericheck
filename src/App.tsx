@@ -3,6 +3,7 @@ import LandingScreen from './screens/LandingScreen'
 import ConsentScreen from './screens/ConsentScreen'
 import DemographicsScreen from './screens/DemographicsScreen'
 import GroupScreen from './screens/GroupScreen'
+import GroupBriefingScreen from './screens/GroupBriefingScreen'
 import WaitingScreen from './screens/WaitingScreen'
 import Part1Screen from './screens/Part1Screen'
 import BreakScreen from './screens/BreakScreen'
@@ -49,6 +50,7 @@ type Screen =
   | 'consent'
   | 'demographics'
   | 'group'
+  | 'group_briefing'
   | 'waiting'
   | 'part1'
   | 'part1_done'
@@ -120,7 +122,16 @@ function ParticipantApp() {
       return (
         <GroupScreen
           participantCode={participantCode}
-          onGroupSet={(g) => goTo(selfPaced ? 'part1' : 'waiting', { group: g })}
+          onGroupSet={(g) => goTo('group_briefing', { group: g })}
+        />
+      )
+
+    case 'group_briefing':
+      return (
+        <GroupBriefingScreen
+          participantCode={participantCode}
+          group={group as 'A' | 'B' | 'C'}
+          onContinue={() => goTo(selfPaced ? 'part1' : 'waiting')}
         />
       )
 
