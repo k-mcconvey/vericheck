@@ -2,10 +2,11 @@ import { useState, useEffect, type CSSProperties } from 'react'
 import { supabase } from '../data/dataClient'
 import * as dc from '../data/dataClient'
 import { MIN_ITEM_SECONDS } from '../config'
+import DebriefDashboard from './DebriefDashboard'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type AdminTab = 'control' | 'monitor' | 'participants' | 'leaderboard' | 'exports' | 'item_stats'
+type AdminTab = 'control' | 'monitor' | 'participants' | 'leaderboard' | 'exports' | 'item_stats' | 'debrief'
 
 const PHASES = [
   'landing', 'consent', 'demographics', 'group_select',
@@ -68,6 +69,7 @@ export default function AdminConsoleScreen({ onSignOut }: Props) {
     leaderboard: 'Leaderboard',
     exports: 'Exports',
     item_stats: 'Item Stats',
+    debrief: 'Debrief',
   }
 
   return (
@@ -101,13 +103,14 @@ export default function AdminConsoleScreen({ onSignOut }: Props) {
         ))}
       </div>
 
-      <div className="admin-panel">
+      <div className={`admin-panel${tab === 'debrief' ? ' admin-panel--wide' : ''}`}>
         {tab === 'control' && <ControlTab instanceId={instanceId} />}
         {tab === 'monitor' && <MonitorTab instanceId={instanceId} />}
         {tab === 'participants' && <ParticipantsTab instanceId={instanceId} />}
         {tab === 'leaderboard' && <LeaderboardTab instanceId={instanceId} />}
         {tab === 'exports' && <ExportsTab instanceId={instanceId} />}
         {tab === 'item_stats' && <ItemStatsTab instanceId={instanceId} />}
+        {tab === 'debrief' && <DebriefDashboard instanceId={instanceId} />}
       </div>
     </div>
   )

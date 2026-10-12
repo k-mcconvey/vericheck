@@ -1293,3 +1293,375 @@ body {
     font-size: 3rem;
   }
 }
+
+/* ── Debrief dashboard (admin, projected for participants) ───────────── */
+
+.admin-panel--wide {
+  max-width: 1200px;
+}
+
+.debrief {
+  font-size: 1rem;
+}
+
+.debrief--fullscreen {
+  background: #0f172a;
+  overflow-y: auto;
+  padding: 2rem clamp(1rem, 4vw, 4rem);
+  font-size: 1.15rem;
+}
+
+.debrief-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.debrief-toolbar-note {
+  font-size: 0.8rem;
+  color: #f59e0b;
+}
+
+.debrief-toolbar-btn {
+  font-size: 0.85rem;
+  padding: 0.4rem 0.9rem;
+}
+
+.debrief--fullscreen .debrief-toolbar {
+  opacity: 0.25;
+  transition: opacity 0.2s;
+}
+
+.debrief--fullscreen .debrief-toolbar:hover {
+  opacity: 1;
+}
+
+.debrief-title {
+  font-size: 2.2em;
+  font-weight: 800;
+  color: #f8fafc;
+  margin-bottom: 1.25rem;
+  letter-spacing: -0.01em;
+}
+
+.debrief-section {
+  margin-top: 2.5rem;
+}
+
+.debrief-section-title {
+  font-size: 1.5em;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin-bottom: 0.25rem;
+}
+
+.debrief-section-subtitle {
+  color: #94a3b8;
+  font-size: 0.9em;
+  margin-bottom: 1rem;
+}
+
+.debrief-muted {
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+.debrief-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 1rem;
+}
+
+.debrief-tile {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  padding: 1.1rem 1.25rem;
+}
+
+.debrief-tile-value {
+  font-size: 2.2em;
+  font-weight: 800;
+  color: #f8fafc;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+
+.debrief-tile-label {
+  color: #cbd5e1;
+  font-size: 0.9em;
+  margin-top: 0.3rem;
+}
+
+.debrief-podium {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.debrief-podium-col {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  padding: 1.1rem 1.25rem;
+}
+
+.debrief-podium-title {
+  font-size: 0.8em;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #94a3b8;
+  margin-bottom: 0.75rem;
+}
+
+.debrief-podium-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid #273449;
+}
+
+.debrief-podium-row:first-of-type {
+  border-top: none;
+}
+
+.debrief-podium-row--first .debrief-podium-code {
+  font-size: 1.3em;
+}
+
+.debrief-podium-medal {
+  font-size: 1.4em;
+  width: 1.6em;
+  text-align: center;
+}
+
+.debrief-podium-code {
+  flex: 1;
+  font-family: ui-monospace, monospace;
+  font-weight: 700;
+  color: #f1f5f9;
+}
+
+.debrief-podium-metric {
+  font-weight: 700;
+  color: #f1f5f9;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.debrief-legend {
+  display: flex;
+  gap: 1.25rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.9em;
+  color: #cbd5e1;
+}
+
+.debrief-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.debrief-legend-swatch {
+  width: 0.8em;
+  height: 0.8em;
+  border-radius: 3px;
+}
+
+.debrief-bargroup {
+  margin-bottom: 1rem;
+}
+
+.debrief-bargroup-label {
+  font-weight: 600;
+  color: #f1f5f9;
+  margin-bottom: 0.35rem;
+}
+
+.debrief-bar-row {
+  display: grid;
+  grid-template-columns: 8.5em 1fr 3.5em;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.debrief-bar-label {
+  color: #cbd5e1;
+  font-size: 0.9em;
+}
+
+.debrief-bar-track {
+  height: 1.1em;
+  background: #1e293b;
+  border-radius: 4px;
+}
+
+.debrief-bar-fill {
+  height: 100%;
+  border-radius: 0 4px 4px 0;
+  transition: width 0.4s ease;
+}
+
+.debrief-bar-row:hover .debrief-bar-fill {
+  filter: brightness(1.15);
+}
+
+.debrief-bar-value {
+  font-weight: 700;
+  color: #f1f5f9;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.debrief-items {
+  display: grid;
+  gap: 1rem;
+}
+
+.debrief-item {
+  display: grid;
+  grid-template-columns: minmax(180px, 320px) 1fr;
+  gap: 1.25rem;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  padding: 1rem;
+}
+
+.debrief-item-media {
+  position: relative;
+}
+
+.debrief-item-media img {
+  width: 100%;
+  max-height: 260px;
+  object-fit: contain;
+  background: #0f172a;
+  border-radius: 6px;
+  display: block;
+}
+
+.debrief-item-rank {
+  position: absolute;
+  top: 0.4rem;
+  left: 0.4rem;
+  background: rgba(15, 23, 42, 0.85);
+  color: #f8fafc;
+  font-weight: 800;
+  padding: 0.1rem 0.5rem;
+  border-radius: 4px;
+}
+
+.debrief-item-context {
+  font-weight: 700;
+  color: #f1f5f9;
+  font-size: 1.05em;
+}
+
+.debrief-item-meta {
+  color: #94a3b8;
+  font-size: 0.82em;
+  margin-bottom: 0.75rem;
+}
+
+.debrief-item-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 0.9rem;
+}
+
+.debrief-fact-label {
+  font-size: 0.72em;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+}
+
+.debrief-fact-value {
+  color: #f1f5f9;
+  font-weight: 600;
+}
+
+.debrief-truth {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+.debrief-truth--authentic {
+  background: #052e16;
+  color: #86efac;
+}
+
+.debrief-truth--manipulated {
+  background: #3b0a0a;
+  color: #fca5a5;
+}
+
+.debrief-stack {
+  display: flex;
+  gap: 2px;
+  height: 1.6em;
+}
+
+.debrief-stack-seg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0f172a;
+  font-weight: 700;
+  font-size: 0.8em;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.debrief-stack-seg:first-child {
+  border-radius: 4px 0 0 4px;
+}
+
+.debrief-stack-seg:last-child {
+  border-radius: 0 4px 4px 0;
+}
+
+.debrief-stack-seg:only-child {
+  border-radius: 4px;
+}
+
+.debrief-stack-seg--abstain {
+  color: #f1f5f9;
+}
+
+.debrief-stack-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+  margin-top: 0.35rem;
+  font-size: 0.82em;
+  color: #cbd5e1;
+}
+
+.debrief-footnote {
+  margin-top: 2.5rem;
+  font-size: 0.8em;
+  color: #64748b;
+}
+
+@media (max-width: 640px) {
+  .debrief-item {
+    grid-template-columns: 1fr;
+  }
+
+  .debrief-bar-row {
+    grid-template-columns: 6.5em 1fr 3em;
+  }
+}

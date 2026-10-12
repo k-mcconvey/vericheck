@@ -559,6 +559,96 @@ export async function adminGetLeaderboard(
   }
 }
 
+export interface DebriefItem {
+  item_id: number
+  image_filename: string
+  phase: string
+  type: string
+  family: string
+  case_context: string
+  stakes_tag: string
+  ground_truth: 'authentic' | 'manipulated'
+  veriscan_score: number
+  veriscan_verdict: 'authentic' | 'manipulated' | 'cannot_tell'
+  veriscan_correct: boolean
+  detector_regime: string
+  n: number
+  pct_correct: number
+  pct_wrong: number
+  pct_abstain: number
+  pct_said_authentic: number
+  pct_said_manipulated: number
+}
+
+export interface DebriefData {
+  participants: { total: number; completed: number }
+  overall: {
+    judgments: number
+    pct_correct: number | null
+    pct_abstain: number | null
+    avg_seconds: number | null
+    avg_seconds_correct: number | null
+    avg_seconds_wrong: number | null
+  }
+  top_scorers: LeaderboardData['top_scorers']
+  most_accurate: LeaderboardData['most_accurate']
+  best_error_catchers: LeaderboardData['best_error_catchers']
+  phases: Array<{
+    phase: number
+    n: number
+    crowd_pct_correct: number | null
+    crowd_pct_abstain: number | null
+    items: number
+    veriscan_pct_correct: number | null
+    veriscan_pct_abstain: number | null
+  }>
+  groups: Array<{
+    group: 'A' | 'B' | 'C'
+    participants: number
+    pct_correct: number | null
+    part1_pct_correct: number | null
+    part2_pct_correct: number | null
+    avg_score: number | null
+  }>
+  trust: {
+    consultations: number
+    consult_rate: number | null
+    tool_wrong_n: number
+    followed_when_wrong_pct: number | null
+    caught_when_wrong_pct: number | null
+    tool_right_n: number
+    followed_when_right_pct: number | null
+  }
+  unlocks: {
+    n: number
+    avg_unlocks: number | null
+    no_unlock_n: number
+    no_unlock_pct_correct: number | null
+    some_unlock_n: number
+    some_unlock_pct_correct: number | null
+  }
+  by_truth: Array<{ ground_truth: 'manipulated' | 'authentic'; n: number; pct_correct: number | null }>
+  by_type: Array<{ type: 'image' | 'document'; n: number; pct_correct: number | null }>
+  hardest: DebriefItem[]
+  easiest: DebriefItem[]
+  min_item_n: number
+}
+
+export async function adminGetDebrief(
+  instanceId: string,
+): Promise<DebriefData | { error: string }> {
+  try {
+    const { data, error } = await supabase.functions.invoke('admin-get-debrief', {
+      body: { instance_id: instanceId },
+    })
+    if (error) return { error: error.message }
+    if (data?.error) return { error: data.error }
+    return data as DebriefData
+  } catch (e) {
+    return { error: String(e) }
+  }
+}
+
 export interface ItemStat {
   item_id: number
   phase: string
