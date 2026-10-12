@@ -301,6 +301,111 @@ function ControlTab({ instanceId }: { instanceId: string }) {
           0 = no minimum. Empty = deployment default ({MIN_ITEM_SECONDS} s). Takes effect on the next item shown to each participant.
         </p>
       </div>
+
+      <ResetInstanceCard instanceId={instanceId} />
+    </div>
+  )
+}
+
+function ResetInstanceCard({ instanceId }: { instanceId: string }) {
+  const [preview, setPreview] = useState<MonitorData | null>(null)
+  const [confirm, setConfirm] = useState('')
+  const [deleteEmails, setDeleteEmails] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const [msg, setMsg] = useState('')
+
+  async function loadPreview() {
+    setError(''); setMsg(''); setBusy(true)
+    const result = await dc.adminGetMonitor(instanceId)
+    setBusy(false)
+    if ('error' in result) setError(result.error)
+    else setPreview(result as MonitorData)
+  }
+
+  function cancel() {
+    setPreview(null); setConfirm(''); setDeleteEmails(false); setError('')
+  }
+
+  async function execute() {
+    setError(''); setBusy(true)
+    const result = await dc.adminResetInstance(instanceId, confirm.trim(), deleteEmails)
+    setBusy(false)
+    if ('error' in result) {
+      setError(result.error)
+    } else {
+      setMsg(
+        `Instance "${instanceId}" reset: ${result.deleted_participants} participant(s) deleted` +
+        `${result.emails_deleted ? ', emails deleted' : ''}. Phase set to Landing; leaderboard hidden.`,
+      )
+      cancel()
+    }
+  }
+
+  return (
+    <div className="card" style={{ border: '1px solid #7f1d1d' }}>
+      <div className="section-label" style={{ color: '#fca5a5' }}>Reset Instance</div>
+      {error && <div className="error-banner" style={{ marginBottom: '1rem' }}>{error}</div>}
+      {msg && <div className="admin-msg-banner">{msg}</div>}
+
+      {!preview ? (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+          <span className="prose" style={{ fontSize: '0.85rem' }}>
+            Wipe all participant data for <strong>{instanceId}</strong> before running with a new audience.
+            Download your exports first.
+          </span>
+          <button className="btn admin-btn-danger" onClick={loadPreview} disabled={busy}>
+            {busy ? '…' : 'Reset Instance…'}
+          </button>
+        </div>
+      ) : (
+        <>
+          <div className="admin-danger-box">
+            <p style={{ fontWeight: 700, color: '#fca5a5', marginBottom: '0.75rem', fontSize: '0.9rem' }}>
+              Permanently deletes {preview.total} participant(s) in instance "{instanceId}"
+              ({preview.by_status.completed} completed, {preview.by_status.in_progress} in progress).
+            </p>
+            <p style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+              Removes all rows for this instance from <code>participants</code>, <code>demographics</code>,{' '}
+              <code>responses</code>, and <code>events</code>, then sets the phase to Landing and hides the
+              leaderboard. The dwell timer setting is kept. This cannot be undone.
+            </p>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.75rem', cursor: 'pointer', fontSize: '0.85rem' }}>
+              <input
+                type="checkbox"
+                checked={deleteEmails}
+                onChange={e => setDeleteEmails(e.target.checked)}
+                style={{ accentColor: '#f87171' }}
+              />
+              <span style={{ color: '#fca5a5' }}>Also delete the dissemination email list for this instance</span>
+            </label>
+          </div>
+          <div style={{ marginTop: '1rem' }}>
+            <label style={{ display: 'block', fontSize: '0.875rem', color: '#cbd5e1', marginBottom: '0.4rem' }}>
+              Type the instance name (<code>{instanceId}</code>) to confirm:
+            </label>
+            <input
+              type="text"
+              className="admin-code-input"
+              style={{ border: '1px solid #7f1d1d', marginBottom: '0.75rem' }}
+              placeholder="Type instance name to confirm"
+              value={confirm}
+              onChange={e => setConfirm(e.target.value)}
+            />
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <button className="btn btn-secondary" onClick={cancel}>Cancel</button>
+              <button
+                className="btn admin-btn-danger"
+                style={{ flex: 1 }}
+                onClick={execute}
+                disabled={busy || confirm.trim() !== instanceId}
+              >
+                {busy ? 'Resetting…' : 'Permanently Reset Instance'}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }

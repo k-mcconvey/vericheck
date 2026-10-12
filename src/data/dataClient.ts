@@ -475,6 +475,23 @@ export async function adminWithdraw(
   }
 }
 
+export async function adminResetInstance(
+  instanceId: string,
+  confirmInstance: string,
+  deleteEmails: boolean,
+): Promise<{ ok: boolean; deleted_participants: number; emails_deleted: boolean } | { error: string }> {
+  try {
+    const { data, error } = await supabase.functions.invoke('admin-reset-instance', {
+      body: { instance_id: instanceId, confirm_instance: confirmInstance, delete_emails: deleteEmails },
+    })
+    if (error) return { error: error.message }
+    if (data?.error) return { error: data.error }
+    return data as { ok: boolean; deleted_participants: number; emails_deleted: boolean }
+  } catch (e) {
+    return { error: String(e) }
+  }
+}
+
 export async function adminExport(
   instanceId: string,
   exportType: string,
