@@ -195,6 +195,8 @@ export default function ResultsScreen({ participantCode, group, selfPaced = fals
               )}
             </div>
           )}
+
+          <EmailResultsCard results={results} participantCode={participantCode} group={group} />
         </>
       )}
 
@@ -245,6 +247,109 @@ export default function ResultsScreen({ participantCode, group, selfPaced = fals
           analyses. No self-delete is available through the app.
         </p>
       </div>
+    </div>
+  )
+}
+
+// ── Email / copy my results ────────────────────────────────────────────────────
+// Client-side only: opens the participant's own mail app via mailto:. The address is
+// never sent to the server, keeping emails unlinked from participant codes (spec §11).
+
+function buildResultsSummary(results: ResultsData, participantCode: string, group: string): string {
+  const eventName = import.meta.env.VITE_EVENT_NAME ?? 'VeriCheck Exercise'
+  const lines = [
+    `My ${eventName} results`,
+    '',
+    `Participant code: ${participantCode}`,
+    `Final score: ${results.final_score}`,
+    '',
+    'Accuracy',
+    `  Part 1: ${pct(results.p1.accuracy)} (${results.p1.correct}/${results.p1.total} correct)`,
+    `  Part 2: ${pct(results.p2.accuracy)} (${results.p2.correct}/${results.p2.total} correct)`,
+    `  Overall: ${pct(results.overall.accuracy)} (${results.overall.correct}/${results.overall.total} correct)`,
+  ]
+  if ((group === 'B' || group === 'C') && results.p1.consult_count > 0) {
+    lines.push(
+      '',
+      `VeriScan consultations (Part 1): ${results.p1.consult_count} (${pct(results.p1.consult_rate)} of items)`,
+    )
+    if (results.overrides.count > 0) {
+      lines.push(`Overrides of VeriScan: ${results.overrides.count} (${pct(results.overrides.accuracy)} accuracy)`)
+    }
+  }
+  if (results.p2.total > 0) {
+    lines.push('', `Part 2 average unlocks per item: ${round1(results.p2.avg_unlocks)} of 5`)
+  }
+  lines.push(
+    '',
+    `Withdrawal: within 7 days, give your participant code (${participantCode}) to the research team ` +
+      'and your data will be permanently deleted.',
+  )
+  return lines.join('\n')
+}
+
+function EmailResultsCard({ results, participantCode, group }: {
+  results: ResultsData
+  participantCode: string
+  group: string
+}) {
+  const [address, setAddress] = useState('')
+  const [copied, setCopied] = useState(false)
+  const [copyFailed, setCopyFailed] = useState(false)
+
+  const summary = buildResultsSummary(results, participantCode, group)
+  const eventName = import.meta.env.VITE_EVENT_NAME ?? 'VeriCheck Exercise'
+  const subject = `My ${eventName} results (code ${participantCode})`
+  const mailto =
+    `mailto:${encodeURIComponent(address.trim())}` +
+    `?subject=${encodeURIComponent(subject)}` +
+    `&body=${encodeURIComponent(summary.replace(/\n/g, '\r\n'))}`
+
+  async function copy() {
+    setCopyFailed(false)
+    try {
+      await navigator.clipboard.writeText(summary)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2500)
+    } catch {
+      setCopyFailed(true)
+    }
+  }
+
+  return (
+    <div className="card">
+      <p className="section-label">Keep a copy of your results</p>
+      <p className="prose" style={{ fontSize: '0.9rem', marginBottom: '0.9rem' }}>
+        Send your results and participant code to yourself. This opens your own email app with
+        everything filled in. We don&apos;t see or store the address you enter.
+      </p>
+      <div className="field" style={{ marginBottom: '0.75rem' }}>
+        <label htmlFor="results-email">Your email address (optional)</label>
+        <input
+          id="results-email"
+          type="email"
+          autoComplete="email"
+          placeholder="you@example.com"
+          value={address}
+          onChange={(e) => setAddress(e.target.value)}
+        />
+      </div>
+      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+        <a className="btn btn-primary" href={mailto} style={{ flex: '1 1 12rem', textAlign: 'center', textDecoration: 'none' }}>
+          Email my results
+        </a>
+        <button className="btn btn-secondary" onClick={copy} style={{ flex: '1 1 12rem' }}>
+          {copied ? 'Copied ✓' : 'Copy results'}
+        </button>
+      </div>
+      {copyFailed && (
+        <p style={{ fontSize: '0.8rem', color: '#fca5a5', marginTop: '0.5rem' }}>
+          Couldn&apos;t copy automatically — please note down your code: {participantCode}
+        </p>
+      )}
+      <p style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '0.6rem' }}>
+        Nothing happens when you tap “Email my results”? Use “Copy results” and paste into any message.
+      </p>
     </div>
   )
 }
